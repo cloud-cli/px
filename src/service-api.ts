@@ -26,7 +26,7 @@ export class ServiceApi extends Resource {
       return;
     }
 
-    this.manager.addProxy(domain, target);
+    this.manager.addProxy({ domain, target });
 
     response.writeHead(201);
     response.end(`${domain} => ${target}`);

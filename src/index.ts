@@ -6,19 +6,19 @@ import { Certificate, Proxy, ServiceManager } from './service-manager.js';
 
 export { ServiceManager, Certificate, Proxy };
 
-export default function (host?: string, port?: number): ServiceManager {
+const manager = new ServiceManager();
+export default manager;
+
+export function startProxy() {
   const gw = new Gateway();
-  const manager = new ServiceManager();
   const services = new ServiceApi(manager);
   const certificates = new CertificateApi(manager);
 
   gw.add('services', services);
   gw.add('certificates', certificates);
 
-  createServer((request, response) => gw.dispatch(request, response)).listen(
-    port || Number(process.env.PORT),
-    host || process.env.HOST,
+  return createServer((request, response) => gw.dispatch(request, response)).listen(
+    Number(process.env.PX_PORT),
+    process.env.PX_HOST || '127.0.0.1',
   );
-
-  return manager;
 }

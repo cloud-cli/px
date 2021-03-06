@@ -25,9 +25,8 @@ export class ServiceManager {
     port: 80,
     ssl: {
       port: 443,
-      key: join(certificatesFolder, 'default', keyFileName),
-      cert: join(certificatesFolder, 'default', certificateFileName),
     },
+    bunyan: false,
   });
 
   constructor() {
@@ -35,7 +34,7 @@ export class ServiceManager {
     this.loadProxies();
   }
 
-  addProxy(domain: string, target: string) {
+  addProxy({ domain, target }: Proxy) {
     this.connectDomainToTarget(domain, target);
     this.proxyConfiguration.set(domain, { domain, target });
     this.saveProxies();
@@ -76,8 +75,8 @@ export class ServiceManager {
   private connectDomainToTarget(domain: string, target: string) {
     this.proxy.register(domain, target, {
       ssl: {
-        key: join(certificatesFolder, domain, keyFileName),
         cert: join(certificatesFolder, domain, certificateFileName),
+        key: join(certificatesFolder, domain, keyFileName),
       },
     });
   }
