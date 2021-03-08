@@ -22,10 +22,8 @@ export function startProxy(configuration: ProxyConfiguration) {
 
   manager.reloadProxies();
 
-  createServer((request, response) => gw.dispatch(request, response)).listen(
-    configuration.port,
-    configuration.host || '127.0.0.1',
-  );
+  const { port, host = '127.0.0.1' } = configuration;
+  createServer((request, response) => gw.dispatch(request, response)).listen(port, host);
 
   return manager;
 }
