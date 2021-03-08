@@ -20,7 +20,7 @@ export class CertificateApi extends Resource {
   delete(request: Request, response: Response) {
     const domain = this.getIdFromUrl(request.url);
 
-    this.manager.removeCertificate(domain);
+    this.manager.removeCertificate({ domain });
 
     response.writeHead(200);
     response.end();

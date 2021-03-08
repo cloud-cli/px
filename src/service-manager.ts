@@ -1,11 +1,15 @@
 import { existsSync, mkdirSync, readFileSync, rmdirSync, writeFileSync } from 'fs';
-import redbird from 'redbird';
 import { join } from 'path';
+import redbird from 'redbird';
 
 const certificatesFolder = join(process.cwd(), 'certs');
 const configurationFile = join(process.cwd(), 'proxies.json');
 const keyFileName = 'key';
 const certificateFileName = 'cert';
+
+export interface DomainOption {
+  domain: string;
+}
 
 export interface Proxy {
   domain: string;
@@ -20,18 +24,24 @@ export interface Certificate {
 
 export class ServiceManager {
   private proxyConfiguration = new Map<string, Proxy>();
+  private _proxy: any;
 
-  private proxy = redbird({
-    port: 80,
-    ssl: {
-      port: 443,
-    },
-    bunyan: false,
-  });
+  private get proxy() {
+    if (!this._proxy) {
+      this._proxy = redbird({
+        port: 80,
+        ssl: {
+          port: 443,
+        },
+        bunyan: false,
+      });
+    }
+
+    return this._proxy;
+  }
 
   constructor() {
     this.mkdir(certificatesFolder);
-    this.loadProxies();
   }
 
   addProxy({ domain, target }: Proxy) {
@@ -40,7 +50,8 @@ export class ServiceManager {
     this.saveProxies();
   }
 
-  removeProxy(domain: string) {
+  removeProxy(options: DomainOption) {
+    const { domain } = options;
     const { target } = this.proxyConfiguration.get(domain);
 
     this.proxy.unregister(domain, target);
@@ -56,7 +67,8 @@ export class ServiceManager {
     this.writeFile(join(basePath, keyFileName), key);
   }
 
-  removeCertificate(domain: string) {
+  removeCertificate(options: DomainOption) {
+    const { domain } = options;
     const path = join(certificatesFolder, domain);
 
     if (!existsSync(path)) {
@@ -70,6 +82,23 @@ export class ServiceManager {
 
   getProxyForDomain(domain: string) {
     return this.proxyConfiguration.get(domain);
+  }
+
+  reloadProxies() {
+    this.closeProxy();
+    this.proxyConfiguration.clear();
+
+    if (!existsSync(configurationFile)) return;
+
+    const json = readFileSync(configurationFile, 'utf8') || '[]';
+    const entries = JSON.parse(json) as Array<[string, Proxy]>;
+
+    entries.forEach(([key, proxy]) => {
+      const { domain, target } = proxy;
+
+      this.proxyConfiguration.set(key, proxy);
+      this.connectDomainToTarget(domain, target);
+    });
   }
 
   private connectDomainToTarget(domain: string, target: string) {
@@ -96,19 +125,8 @@ export class ServiceManager {
     this.writeFile(configurationFile, JSON.stringify(proxies));
   }
 
-  private loadProxies() {
-    this.proxyConfiguration.clear();
-
-    if (!existsSync(configurationFile)) return;
-
-    const json = readFileSync(configurationFile, 'utf8') || '[]';
-    const entries = JSON.parse(json) as Array<[string, Proxy]>;
-
-    entries.forEach(([key, proxy]) => {
-      const { domain, target } = proxy;
-
-      this.proxyConfiguration.set(key, proxy);
-      this.connectDomainToTarget(domain, target);
-    });
+  private closeProxy() {
+    this.proxy.close();
+    delete this._proxy;
   }
 }

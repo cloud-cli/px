@@ -33,9 +33,9 @@ export class ServiceApi extends Resource {
   }
 
   delete(request: Request, response: Response) {
-    const id = this.getIdFromUrl(request.url);
+    const domain = this.getDomainFromUrl(request.url);
 
-    this.manager.removeProxy(id);
+    this.manager.removeProxy({ domain });
 
     response.writeHead(200);
     response.end();
@@ -49,8 +49,8 @@ export class ServiceApi extends Resource {
   }
 
   private getServiceById(request: Request, response: Response) {
-    const id = this.getIdFromUrl(request.url);
-    const proxy = this.manager.getProxyForDomain(id);
+    const domain = this.getDomainFromUrl(request.url);
+    const proxy = this.manager.getProxyForDomain(domain);
 
     if (proxy) {
       response.writeHead(200);
@@ -62,7 +62,7 @@ export class ServiceApi extends Resource {
     response.end();
   }
 
-  private getIdFromUrl(url: string) {
+  private getDomainFromUrl(url: string) {
     return url.slice(10);
   }
 }
