@@ -3,16 +3,16 @@ import { createServer } from 'http';
 import { CertificateApi } from './certificate-api.js';
 import { CommandLineInterface } from './cli.js';
 import { ServiceApi } from './service-api.js';
-import { Certificate, Proxy, ServiceManager } from './service-manager.js';
+import { Certificate, Proxy, ProxyManager } from './service-manager.js';
 
-export { ServiceManager, Certificate, Proxy };
+export { ProxyManager, Certificate, Proxy };
 
-const manager = new ServiceManager();
+const manager = new ProxyManager();
 const cli = new CommandLineInterface(manager);
 
 export default cli;
 
-export function startProxy() {
+export function startProxy(configuration: ProxyConfiguration) {
   const gw = new Gateway();
   const services = new ServiceApi(manager);
   const certificates = new CertificateApi(manager);
@@ -22,8 +22,15 @@ export function startProxy() {
 
   manager.reloadProxies();
 
-  return createServer((request, response) => gw.dispatch(request, response)).listen(
-    Number(process.env.PX_PORT),
-    process.env.PX_HOST || '127.0.0.1',
+  createServer((request, response) => gw.dispatch(request, response)).listen(
+    configuration.port,
+    configuration.host || '127.0.0.1',
   );
+
+  return manager;
+}
+
+export interface ProxyConfiguration {
+  host?: string;
+  port: number;
 }

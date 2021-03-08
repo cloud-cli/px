@@ -1,11 +1,11 @@
 import { Resource, Request, Response } from '@cloud-cli/gw';
 import { json } from './helpers.js';
-import { Proxy, ServiceManager } from './service-manager.js';
+import { Proxy, ProxyManager } from './service-manager.js';
 
 export class ServiceApi extends Resource {
   body = { json: {} };
 
-  constructor(private manager: ServiceManager) {
+  constructor(private manager: ProxyManager) {
     super();
   }
 

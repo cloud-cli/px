@@ -1,7 +1,7 @@
-import { Certificate, DomainOption, Proxy, ServiceManager } from './service-manager.js';
+import { Certificate, DomainOption, Proxy, ProxyManager } from './service-manager.js';
 
 export class CommandLineInterface {
-  constructor(private manager: ServiceManager) {}
+  constructor(private manager: ProxyManager) {}
   'add-proxy'(proxy: Proxy) {
     this.manager.addProxy(proxy);
   }

@@ -22,7 +22,7 @@ export interface Certificate {
   key: string;
 }
 
-export class ServiceManager {
+export class ProxyManager {
   private proxyConfiguration = new Map<string, Proxy>();
   private _proxy: any;
 
@@ -52,6 +52,11 @@ export class ServiceManager {
 
   removeProxy(options: DomainOption) {
     const { domain } = options;
+
+    if (!this.proxyConfiguration.has(domain)) {
+      return;
+    }
+
     const { target } = this.proxyConfiguration.get(domain);
 
     this.proxy.unregister(domain, target);

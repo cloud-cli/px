@@ -1,10 +1,10 @@
 import { Resource, Request, Response } from '@cloud-cli/gw';
-import { Certificate, ServiceManager } from './service-manager.js';
+import { Certificate, ProxyManager } from './service-manager.js';
 
 export class CertificateApi extends Resource {
   body = { json: {} };
 
-  constructor(private manager: ServiceManager) {
+  constructor(private manager: ProxyManager) {
     super();
   }
 

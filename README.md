@@ -1,40 +1,34 @@
 ## PX
 
-Reverse proxy self-service
+Reverse proxy
 
-#### Use as a module
-
-```ts
-import px from '@cloud-cli/px';
-
-px.addProxy({ domain: 'example.com', target: 'localhost:1234' });
-px.removeProxy('example.com');
-
-console.log(px.getDomainList());
-console.log(px.getProxyForDomain('example.com'));
-
-px.addCertificate({ domain: 'example.com', certificate: '...', key: '...' });
-px.removeCertificate('example.com');
-```
-
-#### Use as a standalone API
+#### Usage
 
 ```ts
 import { startProxy } from '@cloud-cli/px';
 
-startProxy();
+const px = startProxy({
+  port: 4567,
+});
+
+px.removeProxy({ domain: 'example.com' });
+px.addProxy({ domain: 'example.com', target: 'localhost:1234' });
+
+px.removeCertificate({ domain: 'example.com' });
+px.addCertificate({ domain: 'example.com', certificate: '...', key: '...' });
+
+console.log(px.getDomainList());
+console.log(px.getProxyForDomain('example.com'));
 ```
 
-**Environment variables**
+**startProxy() options**
 
-| Property  | Type   | Default     |
-| --------- | ------ | ----------- |
-| `PX_HOST` | String | '127.0.0.1' |
-| `PX_PORT` | Number |             |
+| Property | Type   | Default     |
+| -------- | ------ | ----------- |
+| `host`   | String | '127.0.0.1' |
+| `port`   | Number |             |
 
-That's it!
-
-#### API Reference
+#### HTTP API
 
 **Add a certificate**
 
