@@ -2,8 +2,8 @@ import { Gateway } from '@cloud-cli/gw';
 import { createServer } from 'http';
 import { CertificateApi } from './certificate-api.js';
 import { CommandLineInterface } from './cli.js';
-import { ServiceApi } from './service-api.js';
-import { Certificate, Proxy, ProxyManager } from './service-manager.js';
+import { ProxyApi } from './proxy-api.js';
+import { Certificate, Proxy, ProxyManager } from './proxy-manager.js';
 
 export { ProxyManager, Certificate, Proxy };
 
@@ -14,11 +14,11 @@ export default cli;
 
 export function startProxy(configuration: ProxyConfiguration) {
   const gw = new Gateway();
-  const services = new ServiceApi(manager);
+  const proxies = new ProxyApi(manager);
   const certificates = new CertificateApi(manager);
 
-  gw.add('services', services);
-  gw.add('certificates', certificates);
+  gw.add(proxies.apiName, proxies);
+  gw.add(certificates.apiName, certificates);
 
   manager.reloadProxies();
 

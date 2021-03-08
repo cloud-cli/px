@@ -1,8 +1,10 @@
 import { Resource, Request, Response } from '@cloud-cli/gw';
 import { json } from './helpers.js';
-import { Proxy, ProxyManager } from './service-manager.js';
+import { Proxy, ProxyManager } from './proxy-manager.js';
 
-export class ServiceApi extends Resource {
+export class ProxyApi extends Resource {
+  readonly apiName = 'proxies';
+
   body = { json: {} };
 
   constructor(private manager: ProxyManager) {
@@ -10,7 +12,7 @@ export class ServiceApi extends Resource {
   }
 
   get(request: Request, response: Response): void | Promise<any> {
-    if (request.url === '/services') {
+    if (request.url === '/' + this.apiName) {
       return this.listAllServices(request, response);
     }
 
@@ -63,6 +65,6 @@ export class ServiceApi extends Resource {
   }
 
   private getDomainFromUrl(url: string) {
-    return url.slice(10);
+    return url.slice(this.apiName.length + 2);
   }
 }

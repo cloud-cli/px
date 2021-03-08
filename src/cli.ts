@@ -1,4 +1,4 @@
-import { Certificate, DomainOption, Proxy, ProxyManager } from './service-manager.js';
+import { Certificate, DomainOption, Proxy, ProxyManager } from './proxy-manager.js';
 
 export class CommandLineInterface {
   constructor(private manager: ProxyManager) {}
