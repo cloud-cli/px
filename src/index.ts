@@ -1,4 +1,4 @@
-import { Gateway } from '@cloud-cli/gw';
+import { Gateway, Documentation, Resource } from '@cloud-cli/gw';
 import { createServer } from 'http';
 import { CertificateApi } from './certificate-api.js';
 import { CommandLineInterface } from './cli.js';
@@ -19,6 +19,7 @@ export function startProxy(configuration: ProxyConfiguration) {
 
   gw.add(proxies.apiName, proxies);
   gw.add(certificates.apiName, certificates);
+  gw.add('docs', (new Documentation(import.meta.url) as unknown) as Resource);
 
   manager.reloadProxies();
 
