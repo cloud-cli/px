@@ -17,4 +17,8 @@ export class CommandLineInterface {
   removeCertificate(options: DomainOption) {
     this.manager.removeCertificate(options);
   }
+
+  list() {
+    return this.manager.getDomainList();
+  }
 }
