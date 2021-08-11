@@ -3,7 +3,7 @@ import { join } from 'path';
 import redbird from 'redbird';
 
 const certificatesFolder = join(process.cwd(), 'certs');
-const configurationFile = join(process.cwd(), 'proxies.json');
+const configurationFile = join(process.cwd(), 'data', 'px.json');
 const keyFileName = 'key';
 const certificateFileName = 'cert';
 

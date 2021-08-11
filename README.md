@@ -1,15 +1,15 @@
 ## PX
 
-Reverse proxy
+Reverse proxy with Nginx
 
 #### Usage
 
-```ts
-import { startProxy } from '@cloud-cli/px';
+As a module:
 
-const px = startProxy({
-  port: 4567,
-});
+```ts
+import px from '@cloud-cli/px';
+
+px.start({ port: 4567 });
 
 px.removeProxy({ domain: 'example.com' });
 px.addProxy({ domain: 'example.com', target: 'localhost:1234' });
@@ -19,6 +19,15 @@ px.addCertificate({ domain: 'example.com', certificate: '...', key: '...' });
 
 console.log(px.getDomainList());
 console.log(px.getProxyForDomain('example.com'));
+```
+
+With Cloudy CLI:
+
+```ts
+import px from '@cloud-cli/px';
+import { cli } from '@cloud-cli/cy';
+
+cli.add('px', px);
 ```
 
 **startProxy() options**

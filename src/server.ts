@@ -1,5 +1,3 @@
-import { startProxy } from './index';
+import px from './index.js';
 
-startProxy({
-  port: +process.env.PORT,
-});
+px.start({ port: +process.env.PORT });

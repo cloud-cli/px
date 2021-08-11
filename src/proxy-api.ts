@@ -1,6 +1,9 @@
 import { Resource, Request, Response } from '@cloud-cli/gw';
-import { json } from './helpers.js';
 import { Proxy, ProxyManager } from './proxy-manager.js';
+
+function json(input: any) {
+  return JSON.stringify(input, null, 2);
+}
 
 export class ProxyApi extends Resource {
   readonly apiName = 'proxies';

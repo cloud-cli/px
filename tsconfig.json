@@ -2,7 +2,7 @@
   "compilerOptions": {
     "moduleResolution": "node",
     "module": "esnext",
-    "target": "esnext",
+    "target": "es2020",
     "lib": ["ESNext"],
     "esModuleInterop": true,
     "noUnusedLocals": true,
