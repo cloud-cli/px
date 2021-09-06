@@ -30,7 +30,7 @@ import { cli } from '@cloud-cli/cy';
 cli.add('px', px);
 ```
 
-**startProxy() options**
+**start() options**
 
 | Property | Type   | Default     |
 | -------- | ------ | ----------- |
@@ -42,7 +42,7 @@ cli.add('px', px);
 **Add a certificate**
 
 ```
-PUT /certificates
+POST /certificates
 
 {
   "domain": "example.com",

@@ -93,17 +93,23 @@ export class ProxyManager {
     this.closeProxy();
     this.proxyConfiguration.clear();
 
-    if (!existsSync(configurationFile)) return;
+    const proxyList = this.getProxyList();
 
-    const json = readFileSync(configurationFile, 'utf8') || '[]';
-    const entries = JSON.parse(json) as Array<[string, Proxy]>;
-
-    entries.forEach(([key, proxy]) => {
+    proxyList.forEach(([key, proxy]) => {
       const { domain, target } = proxy;
 
       this.proxyConfiguration.set(key, proxy);
       this.connectDomainToTarget(domain, target);
     });
+  }
+
+  getProxyList() {
+    if (!existsSync(configurationFile)) return;
+
+    const json = readFileSync(configurationFile, 'utf8') || '[]';
+    const entries = JSON.parse(json) as Array<[string, Proxy]>;
+
+    return entries;
   }
 
   private connectDomainToTarget(domain: string, target: string) {
@@ -117,7 +123,7 @@ export class ProxyManager {
 
   private mkdir(path: string) {
     if (!existsSync(path)) {
-      mkdirSync(path);
+      mkdirSync(path, { recursive: true });
     }
   }
 

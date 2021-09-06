@@ -10,7 +10,7 @@ export class CertificateApi extends Resource {
     super();
   }
 
-  put(request: Request, response: Response): void | Promise<any> {
+  post(request: Request, response: Response): void | Promise<any> {
     const certificate = request.body as Certificate;
 
     this.manager.addCertificate(certificate);
