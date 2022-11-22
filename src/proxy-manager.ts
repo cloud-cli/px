@@ -104,7 +104,7 @@ export class ProxyManager {
   }
 
   getProxyList() {
-    if (!existsSync(configurationFile)) return;
+    if (!existsSync(configurationFile)) return [];
 
     const json = readFileSync(configurationFile, 'utf8') || '[]';
     const entries = JSON.parse(json) as Array<[string, Proxy]>;
