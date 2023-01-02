@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rm, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { join } from "path";
 import redbird from "redbird";
 
@@ -76,8 +76,8 @@ export class ProxyManager {
   removeCertificate(options: DomainOption) {
     const basePath = join(certificatesFolder, options.domain);
 
-    rm(basePath + certificateExtension, { force: true });
-    rm(basePath + keyExtension, { force: true });
+    rmSync(basePath + certificateExtension, { force: true });
+    rmSync(basePath + keyExtension, { force: true });
   }
 
   getDomainList() {
