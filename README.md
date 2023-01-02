@@ -1,75 +1,58 @@
 ## PX
 
-Reverse proxy with Nginx
+Reverse proxy to map local services to http(s) subdomains
 
 #### Usage
 
-As a module:
-
 ```ts
-import px from '@cloud-cli/px';
+// cloudy.conf.mjs
 
-px.start({ port: 4567 });
+import proxy from '@cloud-cli/px';
 
-px.removeProxy({ domain: 'example.com' });
-px.addProxy({ domain: 'example.com', target: 'localhost:1234' });
+export default { proxy };
 
-px.removeCertificate({ domain: 'example.com' });
-px.addCertificate({ domain: 'example.com', certificate: '...', key: '...' });
-
-console.log(px.getDomainList());
-console.log(px.getProxyForDomain('example.com'));
 ```
 
-With Cloudy CLI:
-
-```ts
-import px from '@cloud-cli/px';
-import { cli } from '@cloud-cli/cy';
-
-cli.add('px', px);
-```
-
-**start() options**
-
-| Property | Type   | Default     |
-| -------- | ------ | ----------- |
-| `host`   | String | '127.0.0.1' |
-| `port`   | Number |             |
-
-#### HTTP API
+#### API
 
 **Add a certificate**
 
 ```
-POST /certificates
-
-{
-  "domain": "example.com",
-  "certificate": "...",
-  "key": "...",
-}
-
+cy proxy.addCertificate --domain="example.com" --certificate @path/to/cert --key @path/to/key
 ```
 
-**Add a certificate**
+**Remove a certificate**
 
 ```
-DELETE /certificates/example.com
+cy proxy.removeCertificate --domain example.com
 ```
 
-**Add a service**
+**Add a proxy to a local service**
 
 ```
-POST /services
-{
-  "domain": "example.com",
-  "target": "localhost:1234"
-}
+cy proxy.addProxy --domain "foo.example.com" --target "localhost:1234"
 ```
 
-**Remove a service**
+**Remove a proxy**
 
 ```
-DELETE /services/example.com
+cy proxy.removeProxy --domain "foo.example.com"
+```
+
+**List proxies**
+
+```
+cy proxy.getProxyList
+```
+
+**List registered domains**
+
+```
+cy proxy.getDomainList
+```
+
+**Reload all configurations**
+
+```
+cy proxy.reload
 ```
