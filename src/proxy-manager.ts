@@ -1,11 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, rmdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import redbird from 'redbird';
+import { existsSync, mkdirSync, readFileSync, rm, writeFileSync } from "fs";
+import { join } from "path";
+import redbird from "redbird";
 
-const certificatesFolder = join(process.cwd(), 'certs');
-const configurationFile = join(process.cwd(), 'data', 'px.json');
-const keyFileName = 'key';
-const certificateFileName = 'cert';
+const certificatesFolder = join(process.cwd(), "certs");
+const configurationFile = join(process.cwd(), "data", "px.json");
+const keyExtension = ".key";
+const certificateExtension = ".cert";
 
 export interface DomainOption {
   domain: string;
@@ -41,7 +41,9 @@ export class ProxyManager {
   }
 
   constructor() {
-    this.mkdir(certificatesFolder);
+    if (!existsSync(certificatesFolder)) {
+      mkdirSync(certificatesFolder, { recursive: true });
+    }
   }
 
   addProxy({ domain, target }: Proxy) {
@@ -67,18 +69,15 @@ export class ProxyManager {
   addCertificate({ domain, certificate, key }: Certificate) {
     const basePath = join(certificatesFolder, domain);
 
-    this.mkdir(basePath);
-    this.writeFile(join(basePath, certificateFileName), certificate);
-    this.writeFile(join(basePath, keyFileName), key);
+    this.writeFile(basePath + certificateExtension, certificate);
+    this.writeFile(basePath + keyExtension, key);
   }
 
   removeCertificate(options: DomainOption) {
-    const { domain } = options;
-    const path = join(certificatesFolder, domain);
+    const basePath = join(certificatesFolder, options.domain);
 
-    if (!existsSync(path)) {
-      rmdirSync(path, { recursive: true });
-    }
+    rm(basePath + certificateExtension, { force: true });
+    rm(basePath + keyExtension, { force: true });
   }
 
   getDomainList() {
@@ -106,25 +105,35 @@ export class ProxyManager {
   getProxyList() {
     if (!existsSync(configurationFile)) return [];
 
-    const json = readFileSync(configurationFile, 'utf8') || '[]';
+    const json = readFileSync(configurationFile, "utf8") || "[]";
     const entries = JSON.parse(json) as Array<[string, Proxy]>;
 
     return entries;
   }
 
   private connectDomainToTarget(domain: string, target: string) {
+    const parts = domain.split(".");
+    let rootDomain: string = "";
+
+    while (parts.length) {
+      rootDomain = parts.join(".");
+
+      if (existsSync(join(certificatesFolder, rootDomain) + keyExtension))
+        break;
+
+      parts.shift();
+    }
+
+    if (!rootDomain) {
+      throw new Error("Certificate not found for " + domain);
+    }
+
     this.proxy.register(domain, target, {
       ssl: {
-        cert: join(certificatesFolder, domain, certificateFileName),
-        key: join(certificatesFolder, domain, keyFileName),
+        cert: join(certificatesFolder, rootDomain) + certificateExtension,
+        key: join(certificatesFolder, rootDomain) + keyExtension,
       },
     });
-  }
-
-  private mkdir(path: string) {
-    if (!existsSync(path)) {
-      mkdirSync(path, { recursive: true });
-    }
   }
 
   private writeFile(path: string, content: string) {

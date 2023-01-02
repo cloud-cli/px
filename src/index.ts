@@ -11,6 +11,10 @@ export default {
     return manager.removeProxy(options);
   },
 
+  getProxy(options: DomainOption) {
+    return manager.getProxyForDomain(options);
+  },
+
   addCertificate(options: Certificate) {
     return manager.addCertificate(options);
   },
@@ -24,14 +28,10 @@ export default {
   },
 
   getDomainList() {
-    return manager.getDomainList();  
+    return manager.getDomainList();
   },
 
   getProxyList() {
-    return manager.getProxyList();  
-  },
-
-  getProxyForDomain(o: DomainOption) {
-    return manager.getProxyForDomain(o);  
-  },
+    return manager.getProxyList();
+  }
 }
