@@ -22,4 +22,16 @@ export default {
   reload() {
     return manager.reloadProxies();
   },
+
+  getDomainList() {
+    return manager.getDomainList();  
+  },
+
+  getProxyList() {
+    return manager.getProxyList();  
+  },
+
+  getProxyForDomain(o: DomainOption) {
+    return manager.getProxyForDomain(o);  
+  },
 }

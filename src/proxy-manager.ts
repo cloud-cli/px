@@ -85,8 +85,8 @@ export class ProxyManager {
     return Array.from(this.proxyConfiguration.keys() || []);
   }
 
-  getProxyForDomain(domain: string) {
-    return this.proxyConfiguration.get(domain);
+  getProxyForDomain(options: DomainOption) {
+    return this.proxyConfiguration.get(options.domain);
   }
 
   reloadProxies() {
