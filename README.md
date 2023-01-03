@@ -10,7 +10,6 @@ Reverse proxy to map local services to http(s) subdomains
 import proxy from '@cloud-cli/px';
 
 export default { proxy };
-
 ```
 
 #### API
@@ -18,7 +17,7 @@ export default { proxy };
 **Add a certificate**
 
 ```
-cy proxy.addCertificate --domain="example.com" --certificate @path/to/cert --key @path/to/key
+cy proxy.addCertificate --domain example.com --certificate @path/to/cert --key @path/to/key
 ```
 
 **Remove a certificate**
@@ -37,6 +36,12 @@ cy proxy.addProxy --domain "foo.example.com" --target "localhost:1234"
 
 ```
 cy proxy.removeProxy --domain "foo.example.com"
+```
+
+**Get details of a proxy**
+
+```
+cy proxy.getProxy --domain "foo.example.com"
 ```
 
 **List proxies**
