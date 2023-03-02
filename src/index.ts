@@ -1,37 +1,29 @@
-import { ProxyManager, Proxy, DomainOption, Certificate } from './proxy-manager.js';
+import { ProxyManager, HttpProxy, Domain } from './proxy-manager.js';
 
 const manager = new ProxyManager();
 
 export default {
-  addProxy(options: Proxy) {
+  add(options: HttpProxy) {
     return manager.addProxy(options);
   },
 
-  removeProxy(options: DomainOption) {
+  remove(options: HttpProxy) {
     return manager.removeProxy(options);
   },
 
-  getProxy(options: DomainOption) {
-    return manager.getProxyForDomain(options);
-  },
-
-  addCertificate(options: Certificate) {
-    return manager.addCertificate(options);
-  },
-
-  removeCertificate(options: DomainOption) {
-    return manager.removeCertificate(options);
+  get(options: Domain) {
+    return manager.getProxyListForDomain(options);
   },
 
   reload() {
     return manager.reloadProxies();
   },
 
-  getDomainList() {
+  domains() {
     return manager.getDomainList();
   },
 
-  getProxyList() {
+  list() {
     return manager.getProxyList();
-  }
-}
+  },
+};

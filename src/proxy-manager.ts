@@ -1,30 +1,42 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
-import { join } from "path";
-import redbird from "redbird";
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import redbird from 'redbird';
 
-const certificatesFolder = join(process.cwd(), "certs");
-const configurationFile = join(process.cwd(), "data", "px.json");
-const keyExtension = ".key";
-const certificateExtension = ".cert";
+const certificatesFolder = process.env.PX_CERTS_FOLDER || '/etc/letsencrypt/live';
+const certificateFile = 'fullchain.pem';
+const keyFile = 'privkey.pem';
 
-export interface DomainOption {
+const configurationFile = join(process.cwd(), 'data', 'px.json');
+
+const domainNotSpecifiedError = new Error('Domain not specified');
+const targetNotSpecifiedError = new Error('Target not specified');
+const notFoundError = new Error('Proxy not found');
+
+interface SslOptions {
+  redirect: boolean;
+  cert?: string;
+  key?: string;
+}
+
+interface RedBird {
+  register(domain: string, target: string, options?: { ssl: SslOptions }): void;
+  unregister(domain: string, target: string): void;
+  close(): void;
+}
+
+export interface Domain {
   domain: string;
 }
 
-export interface Proxy {
-  domain: string;
+export interface HttpProxy extends Domain {
   target: string;
 }
 
-export interface Certificate {
-  domain: string;
-  certificate: string;
-  key: string;
-}
+const proxyKey = ({ domain, target }: HttpProxy) => `${domain} => ${target}`;
 
 export class ProxyManager {
-  private proxyConfiguration = new Map<string, Proxy>();
-  private _proxy: any;
+  private proxyList: HttpProxy[] = [];
+  private _proxy: RedBird;
 
   private get proxy() {
     if (!this._proxy) {
@@ -40,109 +52,117 @@ export class ProxyManager {
     return this._proxy;
   }
 
-  constructor() {
-    if (!existsSync(certificatesFolder)) {
-      mkdirSync(certificatesFolder, { recursive: true });
-    }
+  addProxy(proxy: HttpProxy) {
+    return new Promise((resolve, reject) => {
+      if (!proxy.domain) {
+        return reject(domainNotSpecifiedError);
+      }
+
+      if (!proxy.target) {
+        return reject(targetNotSpecifiedError);
+      }
+
+      this.connectDomainToTarget(proxy);
+      this.saveProxies();
+      resolve(null);
+    });
   }
 
-  addProxy({ domain, target }: Proxy) {
-    this.connectDomainToTarget(domain, target);
-    this.proxyConfiguration.set(domain, { domain, target });
-    this.saveProxies();
-  }
+  removeProxy(options: HttpProxy) {
+    return new Promise((resolve, reject) => {
+      if (!options.domain) {
+        return reject(domainNotSpecifiedError);
+      }
 
-  removeProxy(options: DomainOption) {
-    const { domain } = options;
+      if (!options.target) {
+        return reject(targetNotSpecifiedError);
+      }
 
-    if (!this.proxyConfiguration.has(domain)) {
-      return;
-    }
+      const proxy = this.proxyList.find((p) => proxyKey(p) === proxyKey(options));
 
-    const { target } = this.proxyConfiguration.get(domain);
+      if (!proxy) {
+        return reject(notFoundError);
+      }
 
-    this.proxy.unregister(domain, target);
-    this.proxyConfiguration.delete(domain);
-    this.saveProxies();
-  }
+      this.disconnectDomainAndTarget(proxy);
+      this.saveProxies();
 
-  addCertificate({ domain, certificate, key }: Certificate) {
-    const basePath = join(certificatesFolder, domain);
-
-    this.writeFile(basePath + certificateExtension, certificate);
-    this.writeFile(basePath + keyExtension, key);
-  }
-
-  removeCertificate(options: DomainOption) {
-    const basePath = join(certificatesFolder, options.domain);
-
-    rmSync(basePath + certificateExtension, { force: true });
-    rmSync(basePath + keyExtension, { force: true });
+      resolve(true);
+    });
   }
 
   getDomainList() {
-    return Array.from(this.proxyConfiguration.keys() || []);
+    return this.proxyList.map((p) => p.domain);
   }
 
-  getProxyForDomain(options: DomainOption) {
-    return this.proxyConfiguration.get(options.domain);
+  getProxyList() {
+    return this.proxyList.map(proxyKey);
+  }
+
+  getProxyListForDomain(options: Domain) {
+    return this.proxyList.filter((p) => p.domain === options.domain);
   }
 
   reloadProxies() {
     this.closeProxy();
-    this.proxyConfiguration.clear();
+    this.proxyList = [];
 
-    const proxyList = this.getProxyList();
-
-    proxyList.forEach(([key, proxy]) => {
-      const { domain, target } = proxy;
-
-      this.proxyConfiguration.set(key, proxy);
-      this.connectDomainToTarget(domain, target);
-    });
+    this.readProxyList().forEach((proxy) => this.connectDomainToTarget(proxy));
   }
 
-  getProxyList() {
-    if (!existsSync(configurationFile)) return [];
+  private readProxyList() {
+    if (!existsSync(configurationFile)) {
+      return [];
+    }
 
-    const json = readFileSync(configurationFile, "utf8") || "[]";
-    const entries = JSON.parse(json) as Array<[string, Proxy]>;
-
-    return entries;
+    const json = readFileSync(configurationFile, 'utf8') || '[]';
+    return JSON.parse(json) as Array<HttpProxy>;
   }
 
-  private connectDomainToTarget(domain: string, target: string) {
-    const parts = domain.split(".");
-    let rootDomain: string = "";
+  private disconnectDomainAndTarget(proxy: HttpProxy) {
+    const { domain, target } = proxy;
+
+    this.proxy.unregister(domain, target);
+    this.proxyList = this.proxyList.filter((p) => proxyKey(p) !== proxyKey(proxy));
+  }
+
+  private connectDomainToTarget(proxy: HttpProxy) {
+    const { domain, target } = proxy;
+    const rootDomain = this.findRootDomain(domain);
+    const ssl = { redirect: false };
+
+    if (rootDomain) {
+      Object.assign(ssl, {
+        redirect: true,
+        cert: join(certificatesFolder, rootDomain, certificateFile),
+        key: join(certificatesFolder, rootDomain, keyFile),
+      });
+    }
+
+    this.proxy.register(domain, target, { ssl });
+    this.proxyList = this.proxyList.filter((p) => proxyKey(p) !== proxyKey(proxy)).concat(proxy);
+  }
+
+  private findRootDomain(domain: string) {
+    let rootDomain: string = '';
+    const parts = domain.split('/')[0].split('.');
 
     while (parts.length) {
-      rootDomain = parts.join(".");
+      rootDomain = parts.join('.');
 
-      if (existsSync(join(certificatesFolder, rootDomain) + keyExtension))
-        break;
+      if (existsSync(join(certificatesFolder, rootDomain, certificateFile))) {
+        return rootDomain;
+      }
 
       parts.shift();
     }
 
-    if (!rootDomain) {
-      throw new Error("Certificate not found for " + domain);
-    }
-
-    this.proxy.register(domain, target, {
-      ssl: {
-        cert: join(certificatesFolder, rootDomain) + certificateExtension,
-        key: join(certificatesFolder, rootDomain) + keyExtension,
-      },
-    });
-  }
-
-  private writeFile(path: string, content: string) {
-    writeFileSync(path, content);
+    return '';
   }
 
   private saveProxies() {
-    const proxies = Array.from(this.proxyConfiguration.entries());
-    this.writeFile(configurationFile, JSON.stringify(proxies));
+    const proxies = Array.from(this.proxyList.entries());
+    writeFileSync(configurationFile, JSON.stringify(proxies));
   }
 
   private closeProxy() {
