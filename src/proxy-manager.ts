@@ -161,8 +161,7 @@ export class ProxyManager {
   }
 
   private saveProxies() {
-    const proxies = Array.from(this.proxyList.entries());
-    writeFileSync(configurationFile, JSON.stringify(proxies));
+    writeFileSync(configurationFile, JSON.stringify(this.proxyList));
   }
 
   private closeProxy() {
