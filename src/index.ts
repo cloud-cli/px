@@ -11,6 +11,10 @@ export default {
     return manager.removeProxy(options);
   },
 
+  list() {
+    return manager.getProxyList();
+  },
+
   get(options: Domain) {
     return manager.getProxyListForDomain(options);
   },
@@ -21,9 +25,5 @@ export default {
 
   domains() {
     return manager.getDomainList();
-  },
-
-  list() {
-    return manager.getProxyList();
   },
 };

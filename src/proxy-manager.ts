@@ -5,9 +5,7 @@ import redbird from 'redbird';
 const certificatesFolder = process.env.PX_CERTS_FOLDER || '/etc/letsencrypt/live';
 const certificateFile = 'fullchain.pem';
 const keyFile = 'privkey.pem';
-
 const configurationFile = join(process.cwd(), 'data', 'px.json');
-
 const domainNotSpecifiedError = new Error('Domain not specified');
 const targetNotSpecifiedError = new Error('Target not specified');
 const notFoundError = new Error('Proxy not found');
@@ -96,7 +94,7 @@ export class ProxyManager {
   }
 
   getProxyList() {
-    return this.proxyList.map(proxyKey);
+    return this.proxyList.slice();
   }
 
   getProxyListForDomain(options: Domain) {
