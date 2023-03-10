@@ -16,6 +16,7 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "@cloud-cli/prettier-config": "^1.0.0",
     "@types/jasmine": "^4.0.3",
     "@types/jest": "^27.0.1",
     "@types/node": "^14.18.21",
