@@ -35,9 +35,9 @@ export default {
     return manager.getDomainList();
   },
 
-  [init]() {
+  async [init]() {
     Resource.use(new SQLiteDriver());
-    Resource.create(ProxyEntry);
+    await Resource.create(ProxyEntry);
     return px.start();
   },
 };
