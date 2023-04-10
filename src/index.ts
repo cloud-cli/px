@@ -10,7 +10,7 @@ async function add(options: ProxyEntry) {
   const proxy = await manager.addProxy(options);
   px.reload();
   return proxy;
-},
+}
 
 async function remove(options: DomainAndTarget) {
   const removed = await manager.removeProxy(options);
