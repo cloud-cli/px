@@ -54,10 +54,6 @@ export class ProxyManager {
         return reject(domainNotSpecifiedError);
       }
 
-      if (!options.target) {
-        return reject(targetNotSpecifiedError);
-      }
-
       const query = new Query<ProxyEntry>().where('domain').is(options.domain);
 
       if (options.target) {
