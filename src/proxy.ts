@@ -96,7 +96,7 @@ export class ProxyServer {
 
     const isCorsPreflight = req.method === 'OPTIONS' && proxyEntry.cors;
     if (isCorsPreflight) {
-      res.setHeader('Access-Control-Allow-Origin', origin.hostname);
+      setCorsOriginHeader(req, res);
       res.writeHead(204, 'OK');
       res.end();
       return;
@@ -114,8 +114,7 @@ export class ProxyServer {
       setHeaders(proxyRes, res);
       const isCorsSimple = req.method !== 'OPTIONS' && proxyEntry.cors && req.headers.origin;
       if (isCorsSimple) {
-        const corsOrigin = new URL(req.headers.origin);
-        res.setHeader('Access-Control-Allow-Origin', corsOrigin.origin);
+        setCorsOriginHeader(req, res);
       }
 
       res.writeHead(proxyRes.statusCode, proxyRes.statusMessage);
@@ -189,4 +188,9 @@ function getOrigin(req: IncomingMessage): URL {
 function getHost(string: string) {
   const url = new URL(string);
   return url.hostname + (url.port ? ':' + url.port : '');
+}
+
+function setCorsOriginHeader(req, res) {
+  const corsOrigin = new URL(req.headers.origin);
+  res.setHeader('Access-Control-Allow-Origin', corsOrigin.host);
 }
