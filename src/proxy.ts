@@ -96,8 +96,8 @@ export class ProxyServer {
 
     const isCorsPreflight = req.method === 'OPTIONS' && proxyEntry.cors;
     if (isCorsPreflight) {
-      res.writeHead(204, 'OK');
       res.setHeader('Access-Control-Allow-Origin', origin.hostname);
+      res.writeHead(204, 'OK');
       res.end();
       return;
     }
