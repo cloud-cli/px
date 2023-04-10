@@ -30,7 +30,7 @@ function domains() {
   return manager.getDomainList();
 }
 
-async function reload {
+async function reload() {
   Resource.use(new SQLiteDriver());
   await Resource.create(ProxyEntry);
   return px.start();

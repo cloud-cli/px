@@ -58,9 +58,15 @@ export class ProxyManager {
         return reject(targetNotSpecifiedError);
       }
 
+      const query = new Query<ProxyEntry>().where('domain').is(options.domain);
+
+      if (options.target) {
+        query.where('target').is(options.target);
+      }
+
       const proxy = await Resource.find(
         ProxyEntry,
-        new Query<ProxyEntry>().where('domain').is(options.domain).where('target').is(options.target),
+        query,
       );
 
       if (!proxy.length) {
@@ -68,7 +74,9 @@ export class ProxyManager {
       }
 
       try {
-        await proxy[0].remove();
+        for (const p of proxy) {
+          await p.remove();
+        }
         resolve(true);
       } catch (error) {
         reject(error);

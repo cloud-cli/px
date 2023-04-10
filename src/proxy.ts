@@ -37,7 +37,7 @@ export class ProxyServer {
     this.servers.forEach((server: any) => server.close());
 
     this.servers = [
-      createHttpServer((req, res) => this.serveRequest(req, res)).listen(80),
+      createHttpServer((req, res) => this.serveRequest(req, res, true)).listen(80),
       createHttpsServer(this.getSslOptions(), (req, res) => this.serveRequest(req, res)).listen(443),
     ];
   }
@@ -73,11 +73,19 @@ export class ProxyServer {
     targets.forEach((entry) => (this.targets[entry.domain] = entry));
   }
 
-  protected serveRequest(req: IncomingMessage, res: ServerResponse) {
+  protected serveRequest(req: IncomingMessage, res: ServerResponse, insecure = false) {
     const origin = getOrigin(req);
     const proxyEntry = this.targets[origin?.hostname];
 
     if (!origin.hostname || !proxyEntry) {
+      res.writeHead(404, 'Not found');
+      res.end();
+      return;
+    }
+
+    if (proxyEntry.redirect && insecure) {
+      const newURL = new URL(req.url, `https://${req.headers.host}`);
+      res.setHeader('Location', String(newURL));
       res.writeHead(404, 'Not found');
       res.end();
       return;
