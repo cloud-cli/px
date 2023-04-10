@@ -192,5 +192,5 @@ function getHost(string: string) {
 
 function setCorsOriginHeader(req, res) {
   const corsOrigin = new URL(req.headers.origin);
-  res.setHeader('Access-Control-Allow-Origin', corsOrigin.host);
+  res.setHeader('Access-Control-Allow-Origin', corsOrigin.origin);
 }
