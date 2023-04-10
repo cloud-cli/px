@@ -86,7 +86,7 @@ export class ProxyServer {
     if (proxyEntry.redirect && insecure) {
       const newURL = new URL(req.url, `https://${req.headers.host}`);
       res.setHeader('Location', String(newURL));
-      res.writeHead(404, 'Not found');
+      res.writeHead(301, 'HTTPS is better');
       res.end();
       return;
     }
