@@ -6,38 +6,34 @@ import { ProxyEntry, ProxyServer } from './proxy.js';
 const px = new ProxyServer();
 const manager = new ProxyManager();
 
-export default {
-  async add(options: ProxyEntry) {
-    const proxy = await manager.addProxy(options);
-    px.reload();
-    return proxy;
-  },
+async function add(options: ProxyEntry) {
+  const proxy = await manager.addProxy(options);
+  px.reload();
+  return proxy;
+},
 
-  async remove(options: DomainAndTarget) {
-    const removed = await manager.removeProxy(options);
-    px.reload();
-    return removed;
-  },
+async function remove(options: DomainAndTarget) {
+  const removed = await manager.removeProxy(options);
+  px.reload();
+  return removed;
+}
 
-  list() {
-    return manager.getProxyList();
-  },
+function list() {
+  return manager.getProxyList();
+}
 
-  get(options: Domain) {
-    return manager.getProxyListForDomain(options);
-  },
+function get(options: Domain) {
+  return manager.getProxyListForDomain(options);
+}
 
-  reload() {
-    this[init]();
-  },
+function domains() {
+  return manager.getDomainList();
+}
 
-  domains() {
-    return manager.getDomainList();
-  },
+async function reload {
+  Resource.use(new SQLiteDriver());
+  await Resource.create(ProxyEntry);
+  return px.start();
+}
 
-  async [init]() {
-    Resource.use(new SQLiteDriver());
-    await Resource.create(ProxyEntry);
-    return px.start();
-  },
-};
+export default { add, remove, list, get, domains, reload, [init]: reload };
