@@ -18,8 +18,7 @@
   "devDependencies": {
     "@cloud-cli/jest-config": "^1.0.0",
     "@cloud-cli/prettier-config": "^1.0.0",
-    "@cloud-cli/typescript-config": "^1.0.1",
-    "typescript": "^4.7.3"
+    "@cloud-cli/typescript-config": "^1.0.1"
   },
   "repository": {
     "type": "git",
@@ -30,7 +29,6 @@
   },
   "dependencies": {
     "@cloud-cli/cli": "^1.2.2",
-    "@cloud-cli/store": "^1.1.0",
-    "redbird": "^0.10.0"
+    "@cloud-cli/store": "^1.1.0"
   }
 }
