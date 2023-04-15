@@ -19,15 +19,20 @@ export default { proxy };
 **Add a proxy to a local service**
 
 ```
-cy proxy.add --domain "foo.example.com" --target "localhost:1234"
-cy proxy.add --domain "bar.example.com/api" --target "localhost:3000"
+cy proxy.add --domain "foo.example.com" --target "http://localhost:1234"
 ```
+
+All available options:
+
+- `domain`: entrypoint for reverse proxy
+- `target`: any target for requests, can be local or remote
+- `redirect`: if request comes as http, redirect to https
+- `redirectUrl`: if provided, issues a `Location` header and terminates with status 302 instead of proxying a request
 
 **Remove a proxy**
 
 ```
-cy proxy.remove --domain "foo.example.com" --target "localhost:1234"
-cy proxy.remove --domain "bar.example.com/api" --target "localhost:1234"
+cy proxy.remove --domain "foo.example.com"
 ```
 
 **Get details of a proxy**

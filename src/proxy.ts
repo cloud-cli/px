@@ -1,7 +1,7 @@
 import { createServer as createHttpServer, request as httpRequest, IncomingMessage, ServerResponse } from 'http';
 import { createServer as createHttpsServer, request as httpsRequest } from 'https';
 import { createSecureContext } from 'tls';
-import { Model, Property, Query, Resource } from '@cloud-cli/store';
+import { Model, Primary, Property, Query, Resource } from '@cloud-cli/store';
 import { readdir, readFile, stat } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
@@ -12,9 +12,11 @@ const keyFile = 'privkey.pem';
 
 @Model('proxyentry')
 export class ProxyEntry extends Resource {
+  @Primary() @Property(Number) id: number;
   @Property(String) domain: string;
   @Property(String) target: string;
   @Property(Number) redirect: boolean;
+  @Property(String) redirectUrl: string;
   @Property(Number) cors: boolean;
 
   constructor(p: Partial<ProxyEntry>) {
@@ -79,6 +81,13 @@ export class ProxyServer {
 
     if (!origin.hostname || !proxyEntry) {
       res.writeHead(404, 'Not found');
+      res.end();
+      return;
+    }
+
+    if (proxyEntry.redirectUrl) {
+      res.setHeader('Location', String(proxyEntry.redirectUrl));
+      res.writeHead(302, 'Moved somewhere else');
       res.end();
       return;
     }

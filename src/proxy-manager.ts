@@ -37,10 +37,12 @@ export class ProxyManager {
         target: proxy.target,
         cors: !!proxy.cors,
         redirect: !!proxy.redirect,
+        redirectUrl: proxy.redirectUrl || '',
       });
 
       try {
-        await entry.save();
+        const id = await entry.save();
+        entry.id = id;
         resolve(entry);
       } catch (error) {
         reject(error);
