@@ -3,7 +3,6 @@ import { ProxyEntry } from './proxy.js';
 
 const domainNotSpecifiedError = new Error('Domain not specified');
 const targetNotSpecifiedError = new Error('Target not specified');
-const notFoundError = new Error('Proxy not found');
 
 export interface Domain {
   domain: string;
