@@ -28,7 +28,7 @@ export class ProxyManager {
         return reject(domainNotSpecifiedError);
       }
 
-      if (!proxy.target) {
+      if (!proxy.target && !proxy.redirectUrl) {
         return reject(targetNotSpecifiedError);
       }
 
