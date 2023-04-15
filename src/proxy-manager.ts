@@ -67,10 +67,6 @@ export class ProxyManager {
         query,
       );
 
-      if (!proxy.length) {
-        return reject(notFoundError);
-      }
-
       try {
         for (const p of proxy) {
           await p.remove();
