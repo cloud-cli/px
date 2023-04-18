@@ -49,7 +49,7 @@ export class ProxyManager {
     });
   }
 
-  updateProxy(options: ClassProperties<ProxyEntry>) {
+  async updateProxy(options: ClassProperties<ProxyEntry>) {
     const query = new Query<ProxyEntry>().where('domain').is(options.domain);
     const proxies = await Resource.find(ProxyEntry, query);
 
