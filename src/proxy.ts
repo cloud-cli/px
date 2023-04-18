@@ -204,4 +204,5 @@ function setCorsOriginHeader(req, res) {
   res.setHeader('Access-Control-Allow-Origin', corsOrigin.origin);
   res.setHeader('Access-Control-Allow-Headers', '*');
   res.setHeader('Access-Control-Allow-Methods', '*');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
