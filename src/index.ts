@@ -18,6 +18,12 @@ async function remove(options: DomainAndTarget) {
   return removed;
 }
 
+async function update(options: ProxyEntry) {
+  const output = await manager.updateProxy(options);
+  px.reload();
+  return output;
+}
+
 function list() {
   return manager.getProxyList();
 }
@@ -36,4 +42,4 @@ async function reload() {
   return px.start();
 }
 
-export default { add, remove, list, get, domains, reload, [init]: reload };
+export default { add, remove, list, get, update, domains, reload, [init]: reload };

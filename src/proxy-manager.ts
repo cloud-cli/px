@@ -49,6 +49,22 @@ export class ProxyManager {
     });
   }
 
+  updateProxy(options: ClassProperties<ProxyEntry>) {
+    const query = new Query<ProxyEntry>().where('domain').is(options.domain);
+    const proxies = await Resource.find(ProxyEntry, query);
+
+    if (!proxies.length) {
+      return false;
+    }
+
+    for (const proxy of proxies) {
+      ['target', 'cors', 'redirect', 'redirectUrl'].forEach(p => p in options && (proxy[p] = options[p]));
+      await proxy.save();
+    }
+
+    return true;
+  }
+
   removeProxy(options: DomainAndTarget) {
     return new Promise(async (resolve, reject) => {
       if (!options.domain) {
