@@ -114,6 +114,7 @@ export class ProxyServer {
     const proxyRequest = (url.protocol === 'https:' ? httpsRequest : httpRequest)(url, { method: req.method });
     setHeaders(req, proxyRequest);
     proxyRequest.setHeader('host', getHost(target));
+    proxyRequest.setHeader('x-forwarded-for', req.headers.host);
 
     req.on('data', (chunk) => proxyRequest.write(chunk));
     req.on('end', () => proxyRequest.end());
