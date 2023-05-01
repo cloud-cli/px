@@ -61,7 +61,9 @@ export class ProxyServer {
     );
 
     folders.filter(Boolean).forEach(async (rootDomain) => {
-      console.log(`Loading certificate for ${rootDomain}`);
+      if(process.env.DEBUG) {
+        console.log(`Loading certificate for ${rootDomain}`);
+      }
       certs[rootDomain] = createSecureContext({
         cert: await readFile(join(certificatesFolder, rootDomain, certificateFile), 'utf8'),
         key: await readFile(join(certificatesFolder, rootDomain, keyFile), 'utf8'),
@@ -115,6 +117,7 @@ export class ProxyServer {
     setHeaders(req, proxyRequest);
     proxyRequest.setHeader('host', getHost(target));
     proxyRequest.setHeader('x-forwarded-for', req.headers.host);
+    proxyRequest.setHeader('x-forwarded-proto', insecure ? 'http:' : 'https:');
 
     req.on('data', (chunk) => proxyRequest.write(chunk));
     req.on('end', () => proxyRequest.end());
@@ -176,7 +179,7 @@ function setHeaders(from, to) {
 }
 
 function handleError(error, res) {
-  console.log(error);
+  console.error(error);
 
   if (error.code === 'ECONNREFUSED') {
     res.writeHead(502);
