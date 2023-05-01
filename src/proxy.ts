@@ -64,6 +64,7 @@ export class ProxyServer {
       if(process.env.DEBUG) {
         console.log(`Loading certificate for ${rootDomain}`);
       }
+      
       certs[rootDomain] = createSecureContext({
         cert: await readFile(join(certificatesFolder, rootDomain, certificateFile), 'utf8'),
         key: await readFile(join(certificatesFolder, rootDomain, keyFile), 'utf8'),
