@@ -1,9 +1,14 @@
-import { createServer as createHttpServer, request as httpRequest, IncomingMessage, ServerResponse } from 'http';
-import { createServer as createHttpsServer, request as httpsRequest } from 'https';
-import { createSecureContext } from 'tls';
+import {
+  createServer as createHttpServer,
+  request as httpRequest,
+  IncomingMessage,
+  ClientRequest,
+  ServerResponse,
+} from 'http';
+import { createServer as createHttpsServer, request as httpsRequest, ServerOptions as HttpsServerOptions } from 'https';
+import { createSecureContext, SecureContext } from 'tls';
 import { Model, Primary, Property, Query, Resource } from '@cloud-cli/store';
-import { readdir, readFile, stat } from 'fs/promises';
-import { existsSync } from 'fs';
+import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 
 const certificatesFolder = process.env.PX_CERTS_FOLDER || '/etc/letsencrypt/live';
@@ -24,13 +29,8 @@ export class ProxyEntry extends Resource {
   }
 }
 
-interface Certificates {
-  key: string;
-  cert: string;
-}
-
 export class ProxyServer {
-  protected certs: Record<string, Certificates> = {};
+  protected certs: Record<string, SecureContext> = {};
   protected targets: Record<string, ProxyEntry> = {};
   protected servers: any = [];
 
@@ -52,24 +52,19 @@ export class ProxyServer {
   protected async loadCertificates() {
     const certs = (this.certs = {});
 
-    const localCerts = await readdir(certificatesFolder);
-    const folders = await Promise.all(
-      localCerts.map(async (dir) => {
-        const status = await stat(join(certificatesFolder, dir));
-        return status.isDirectory() ? dir : '';
-      }),
-    );
+    const localCerts = await readdir(certificatesFolder, { withFileTypes: true });
+    const folders = localCerts.filter((entry) => entry.isDirectory()).map((dir) => dir.name);
 
-    folders.filter(Boolean).forEach(async (rootDomain) => {
-      if(process.env.DEBUG) {
+    for (const rootDomain of folders) {
+      if (process.env.DEBUG) {
         console.log(`Loading certificate for ${rootDomain}`);
       }
-      
+
       certs[rootDomain] = createSecureContext({
         cert: await readFile(join(certificatesFolder, rootDomain, certificateFile), 'utf8'),
         key: await readFile(join(certificatesFolder, rootDomain, keyFile), 'utf8'),
       });
-    });
+    }
   }
 
   protected async loadTargets() {
@@ -79,7 +74,7 @@ export class ProxyServer {
   }
 
   protected serveRequest(req: IncomingMessage, res: ServerResponse, insecure = false) {
-    const origin = getOrigin(req);
+    const origin = this.getOrigin(req);
     const proxyEntry = this.targets[origin?.hostname];
 
     if (!origin.hostname || !proxyEntry) {
@@ -108,27 +103,29 @@ export class ProxyServer {
 
     const isCorsPreflight = req.method === 'OPTIONS' && proxyEntry.cors;
     if (isCorsPreflight) {
-      setCorsHeaders(req, res);
+      this.setCorsHeaders(req, res);
       res.writeHead(204, { 'Content-Length': '0' });
       res.end();
       return;
     }
 
     const proxyRequest = (url.protocol === 'https:' ? httpsRequest : httpRequest)(url, { method: req.method });
-    setHeaders(req, proxyRequest);
-    proxyRequest.setHeader('host', getHost(target));
+    this.setHeaders(req, proxyRequest);
+    proxyRequest.setHeader('host', this.getHost(target));
     proxyRequest.setHeader('x-forwarded-for', req.headers.host);
-    proxyRequest.setHeader('x-forwarded-proto', insecure ? 'http:' : 'https:');
+    proxyRequest.setHeader('x-forwarded-proto', insecure ? 'http' : 'https');
+    proxyRequest.setHeader('forwarded', 'host=' + req.headers.host + ';proto=' + insecure ? 'http' : 'https');
 
     req.on('data', (chunk) => proxyRequest.write(chunk));
     req.on('end', () => proxyRequest.end());
 
-    proxyRequest.on('error', (error) => handleError(error, res));
+    proxyRequest.on('error', (error) => this.handleError(error, res));
     proxyRequest.on('response', (proxyRes) => {
-      setHeaders(proxyRes, res);
+      this.setHeaders(proxyRes, res);
+
       const isCorsSimple = req.method !== 'OPTIONS' && proxyEntry.cors && req.headers.origin;
       if (isCorsSimple) {
-        setCorsHeaders(req, res);
+        this.setCorsHeaders(req, res);
       }
 
       res.writeHead(proxyRes.statusCode, proxyRes.statusMessage);
@@ -138,77 +135,82 @@ export class ProxyServer {
     });
   }
 
-  protected getSslOptions() {
+  protected getSslOptions(): HttpsServerOptions {
     const server = this;
+
     return {
-      SNICallback(domain: string, cb: Function) {
-        // TODO sanitize string to avoid file navigation!
-        const rootDomain = findRootDomain(domain);
-        if (rootDomain in server.certs) {
-          return cb(null, server.certs[rootDomain]);
+      SNICallback(domain, cb) {
+        const rootDomain = server.findRootDomain(domain);
+
+        if (rootDomain) {
+          return cb(null, rootDomain);
         }
 
-        throw new Error('Not found', { cause: 404 });
+        cb(new Error('Not found', { cause: 404 }), null);
       },
     };
   }
-}
 
-function findRootDomain(domain: string) {
-  let rootDomain: string = '';
-  const parts = domain.split('/')[0].split('.');
+  protected findRootDomain(domain: string) {
+    const parts = domain.split('/')[0].split('.');
+    const certs = this.certs;
 
-  while (parts.length) {
-    rootDomain = parts.join('.');
+    while (parts.length) {
+      const rootDomain = parts.join('.');
 
-    if (existsSync(join(certificatesFolder, rootDomain, certificateFile))) {
-      return rootDomain;
+      if (certs[rootDomain]) {
+        return certs[rootDomain];
+      }
+
+      parts.shift();
     }
 
-    parts.shift();
+    return null;
   }
 
-  return '';
-}
+  protected setHeaders(from: IncomingMessage, to: ServerResponse | ClientRequest) {
+    const headers = Object.entries(from.headers);
 
-function setHeaders(from, to) {
-  const headers = Object.entries(from.headers);
-
-  for (const header of headers) {
-    to.setHeader(header[0], header[1]);
-  }
-}
-
-function handleError(error, res) {
-  console.error(error);
-
-  if (error.code === 'ECONNREFUSED') {
-    res.writeHead(502);
-    res.end();
-    return;
+    for (const header of headers) {
+      to.setHeader(header[0], header[1]);
+    }
   }
 
-  if (!res.headersSent) {
-    res.writeHead(500);
-    res.end();
+  protected getOrigin(req: IncomingMessage): URL {
+    const host = req.headers['x-forwarded-for'] || req.headers.host || '';
+    return (host && new URL('http://' + host)) || null;
   }
-}
 
-function getOrigin(req: IncomingMessage): URL {
-  const host = req.headers['x-forwarded-host'] || req.headers.host || '';
-  return (host && new URL('http://' + host)) || null;
-}
+  protected getHost(string: string) {
+    const url = new URL(string);
+    return url.hostname + (url.port ? ':' + url.port : '');
+  }
 
-function getHost(string: string) {
-  const url = new URL(string);
-  return url.hostname + (url.port ? ':' + url.port : '');
-}
+  protected setCorsHeaders(req: IncomingMessage, res: ServerResponse) {
+    const headers = req.headers;
+    const corsOrigin = new URL(req.headers.origin).origin;
+    const allowedMethod = headers['access-control-request-method'] || 'GET,HEAD,PUT,PATCH,POST,DELETE';
+    const allowedHeaders = headers['access-control-request-headers'] || '*';
 
-function setCorsHeaders(req, res) {
-  const corsOrigin = new URL(req.headers.origin).origin;
-  res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Origin', corsOrigin);
-  res.setHeader('Access-Control-Allow-Headers', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Origin', corsOrigin);
+    res.setHeader('Access-Control-Allow-Headers', allowedHeaders);
+    res.setHeader('Access-Control-Allow-Methods', allowedMethod);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+
+  protected handleError(error: any, res: ServerResponse) {
+    console.error(error);
+
+    if (error.code === 'ECONNREFUSED') {
+      res.writeHead(502);
+      res.end();
+      return;
+    }
+
+    if (!res.headersSent) {
+      res.writeHead(500);
+      res.end();
+    }
+  }
 }
