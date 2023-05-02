@@ -83,8 +83,10 @@ CORS handling on proxy level is convenient, **but a security risk**. Beware:
 - All origins are allowed, all common methods and headers, and credentials are enabled.
 - In case of an `OPTIONS` request, if coming via CORS (a preflight), an empty response will be send and the request ends before calling the proxied target.
 
-Every request has 2 additional headers:
+Every request has additional headers:
 
 - x-forwarded-for: the host of the original request.
 If a proxy is from 'https://foo.example.com' to 'http://localhost:1234', the header will be 'foo.example.com'
-- x-forwarded-proto: 'http:' or 'https:', depends on the original request
+- x-forwarded-proto: 'http' or 'https', depends on the original request
+- forwarded: the standard header with the same information as the other two above
+
