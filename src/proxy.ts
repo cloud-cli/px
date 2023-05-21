@@ -114,7 +114,7 @@ export class ProxyServer {
     proxyRequest.setHeader('host', this.getHost(target));
     proxyRequest.setHeader('x-forwarded-for', req.headers.host);
     proxyRequest.setHeader('x-forwarded-proto', insecure ? 'http' : 'https');
-    proxyRequest.setHeader('forwarded', 'host=' + req.headers.host + ';proto=' + insecure ? 'http' : 'https');
+    proxyRequest.setHeader('forwarded', 'host=' + req.headers.host + ';proto=' + (insecure ? 'http' : 'https'));
 
     req.on('data', (chunk) => proxyRequest.write(chunk));
     req.on('end', () => proxyRequest.end());
