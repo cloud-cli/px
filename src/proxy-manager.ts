@@ -6,6 +6,7 @@ const targetNotSpecifiedError = new Error('Target not specified');
 
 export interface Domain {
   domain: string;
+  host?: string;
 }
 
 export interface DomainAndTarget extends Domain {
@@ -21,9 +22,9 @@ type ClassProperties<T> = {
 };
 
 export class ProxyManager {
-  addProxy(proxy: ClassProperties<ProxyEntry>) {
+  addProxy(proxy: ClassProperties<ProxyEntry> & { host?: string }) {
     return new Promise(async (resolve, reject) => {
-      if (!proxy.domain) {
+      if (!proxy.domain && !proxy.host) {
         return reject(domainNotSpecifiedError);
       }
 
@@ -32,7 +33,7 @@ export class ProxyManager {
       }
 
       const entry = new ProxyEntry({
-        domain: proxy.domain,
+        domain: proxy.domain || proxy.host,
         target: proxy.target,
         cors: !!proxy.cors,
         redirect: !!proxy.redirect,
@@ -49,8 +50,8 @@ export class ProxyManager {
     });
   }
 
-  async updateProxy(options: ClassProperties<ProxyEntry>) {
-    const query = new Query<ProxyEntry>().where('domain').is(options.domain);
+  async updateProxy(options: ClassProperties<ProxyEntry> & { host?: string }) {
+    const query = new Query<ProxyEntry>().where('domain').is(options.domain || options.host);
     const proxies = await Resource.find(ProxyEntry, query);
 
     if (!proxies.length) {
@@ -67,11 +68,11 @@ export class ProxyManager {
 
   removeProxy(options: DomainAndTarget) {
     return new Promise(async (resolve, reject) => {
-      if (!options.domain) {
+      if (!options.domain && !options.host) {
         return reject(domainNotSpecifiedError);
       }
 
-      const query = new Query<ProxyEntry>().where('domain').is(options.domain);
+      const query = new Query<ProxyEntry>().where('domain').is(options.domain || options.host);
 
       if (options.target) {
         query.where('target').is(options.target);
@@ -103,6 +104,6 @@ export class ProxyManager {
   }
 
   getProxyListForDomain(options: Domain) {
-    return Resource.find(ProxyEntry, new Query<ProxyEntry>().where('domain').is(options.domain));
+    return Resource.find(ProxyEntry, new Query<ProxyEntry>().where('domain').is(options.domain || options.host));
   }
 }
