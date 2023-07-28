@@ -202,7 +202,7 @@ export class ProxyServer {
   protected handleError(error: any, res: ServerResponse) {
     console.error(error);
 
-    if (error.code === 'ECONNREFUSED') {
+    if (error.code === 'ECONNREFUSED' || error.code === 'ECONNRESET') {
       res.writeHead(502);
       res.end();
       return;
