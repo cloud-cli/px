@@ -51,11 +51,12 @@ export class ProxyManager {
   }
 
   async updateProxy(options: ClassProperties<ProxyEntry> & { host?: string }) {
-    const query = new Query<ProxyEntry>().where('domain').is(options.domain || options.host);
+    const domain = options.domain || options.host;
+    const query = new Query<ProxyEntry>().where('domain').is(domain);
     const proxies = await Resource.find(ProxyEntry, query);
 
     if (!proxies.length) {
-      return false;
+      proxies.push(new ProxyEntry({ domain }))
     }
 
     for (const proxy of proxies) {
