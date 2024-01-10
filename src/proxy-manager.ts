@@ -1,5 +1,5 @@
 import { Query, Resource } from '@cloud-cli/store';
-import { ProxyEntry } from './proxy.js';
+import { Proxy } from './proxy.js';
 
 const domainNotSpecifiedError = new Error('Domain not specified');
 const targetNotSpecifiedError = new Error('Target not specified');
@@ -22,7 +22,7 @@ type ClassProperties<T> = {
 };
 
 export class ProxyManager {
-  addProxy(proxy: ClassProperties<ProxyEntry> & { host?: string }) {
+  addProxy(proxy: ClassProperties<Proxy> & { host?: string }) {
     return new Promise(async (resolve, reject) => {
       if (!proxy.domain && !proxy.host) {
         return reject(domainNotSpecifiedError);
@@ -32,7 +32,7 @@ export class ProxyManager {
         return reject(targetNotSpecifiedError);
       }
 
-      const entry = new ProxyEntry({
+      const entry = new Proxy({
         domain: proxy.domain || proxy.host,
         target: proxy.target,
         cors: !!proxy.cors,
@@ -50,13 +50,13 @@ export class ProxyManager {
     });
   }
 
-  async updateProxy(options: ClassProperties<ProxyEntry> & { host?: string }) {
+  async updateProxy(options: ClassProperties<Proxy> & { host?: string }) {
     const domain = options.domain || options.host;
-    const query = new Query<ProxyEntry>().where('domain').is(domain);
-    const proxies = await Resource.find(ProxyEntry, query);
+    const query = new Query<Proxy>().where('domain').is(domain);
+    const proxies = await Resource.find(Proxy, query);
 
     if (!proxies.length) {
-      proxies.push(new ProxyEntry({ domain }))
+      proxies.push(new Proxy({ domain }))
     }
 
     for (const proxy of proxies) {
@@ -73,14 +73,14 @@ export class ProxyManager {
         return reject(domainNotSpecifiedError);
       }
 
-      const query = new Query<ProxyEntry>().where('domain').is(options.domain || options.host);
+      const query = new Query<Proxy>().where('domain').is(options.domain || options.host);
 
       if (options.target) {
         query.where('target').is(options.target);
       }
 
       const proxy = await Resource.find(
-        ProxyEntry,
+        Proxy,
         query,
       );
 
@@ -96,15 +96,15 @@ export class ProxyManager {
   }
 
   async getDomainList() {
-    const proxies = await Resource.find(ProxyEntry, new Query<ProxyEntry>());
+    const proxies = await Resource.find(Proxy, new Query<Proxy>());
     return proxies.map((proxy) => proxy.domain);
   }
 
   async getProxyList() {
-    return Resource.find(ProxyEntry, new Query<ProxyEntry>());
+    return Resource.find(Proxy, new Query<Proxy>());
   }
 
   getProxyListForDomain(options: Domain) {
-    return Resource.find(ProxyEntry, new Query<ProxyEntry>().where('domain').is(options.domain || options.host));
+    return Resource.find(Proxy, new Query<Proxy>().where('domain').is(options.domain || options.host));
   }
 }
