@@ -1,26 +1,51 @@
 import { init } from '@cloud-cli/cli';
 import { Resource, SQLiteDriver } from '@cloud-cli/store';
 import { ProxyManager, DomainAndTarget, Domain } from './proxy-manager.js';
-import { ProxyEntry, ProxyServer } from './proxy.js';
+import { loadTargets, Proxy } from './proxy.js';
+import { ProxyServer, ProxySettings, ProxyEntry } from '@cloud-cli/proxy';
 
-const px = new ProxyServer();
+const settings = new ProxySettings({
+  certificatesFolder: process.env.PX_CERTS_FOLDER || '/etc/letsencrypt/live',
+  certificateFile: 'fullchain.pem',
+  keyFile: 'privkey.pem',
+});
+
+const px = new ProxyServer(settings);
 const manager = new ProxyManager();
 
-async function add(options: ProxyEntry) {
+async function reload() {
+  const targets = await loadTargets();
+  px.reset();
+
+  targets.forEach(t => {
+    px.add(new ProxyEntry({
+      domain: t.domain,
+      target: t.target,
+      path: t.path,
+      redirectToHttps: t.redirect,
+      redirectToUrl: t.redirectUrl,
+      cors: t.cors,
+    }));
+  });
+
+  px.start();
+}
+
+async function add(options: Proxy) {
   const proxy = await manager.addProxy(options);
-  px.reload();
+  await reload();
   return proxy;
 }
 
 async function remove(options: DomainAndTarget) {
   const removed = await manager.removeProxy(options);
-  px.reload();
+  await reload();
   return removed;
 }
 
-async function update(options: ProxyEntry) {
+async function update(options: Proxy) {
   const output = await manager.updateProxy(options);
-  px.reload();
+  await reload();
   return output;
 }
 
@@ -36,10 +61,12 @@ function domains() {
   return manager.getDomainList();
 }
 
-async function reload() {
+async function initServer() {
   Resource.use(new SQLiteDriver());
-  await Resource.create(ProxyEntry);
-  return px.start();
+  await Resource.create(Proxy);
+  await reload();
+
+  return px;
 }
 
-export default { add, remove, list, get, update, domains, reload, [init]: reload };
+export default { add, remove, list, get, update, domains, reload, [init]: initServer };

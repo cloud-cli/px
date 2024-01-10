@@ -2,7 +2,7 @@
   "name": "@cloud-cli/px",
   "version": "1.0.0",
   "description": "Reverse Proxy",
-  "main": "dist/index.js",
+  "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",
   "prettier": "@cloud-cli/prettier-config",
@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@cloud-cli/cli": "^1.2.2",
-    "@cloud-cli/store": "^1.1.0"
+    "@cloud-cli/store": "^1.1.0",
+    "@cloud-cli/proxy": "^1.0.0"
   }
 }
