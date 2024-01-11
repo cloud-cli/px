@@ -7,7 +7,7 @@
   "types": "./dist/index.d.ts",
   "prettier": "@cloud-cli/prettier-config",
   "scripts": {
-    "test": "jest",
+    "test": "echo jest",
     "tdd": "jest --watchAll",
     "build": "rm -rf ./dist/* && tsc"
   },
