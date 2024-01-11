@@ -32,8 +32,11 @@ export class ProxyManager {
         return reject(targetNotSpecifiedError);
       }
 
+      const [domain, path = ''] = (proxy.domain || proxy.host).split('/');
+
       const entry = new Proxy({
-        domain: proxy.domain || proxy.host,
+        domain: domain,
+        path: path,
         target: proxy.target,
         cors: !!proxy.cors,
         redirect: !!proxy.redirect,
@@ -51,16 +54,16 @@ export class ProxyManager {
   }
 
   async updateProxy(options: ClassProperties<Proxy> & { host?: string }) {
-    const domain = options.domain || options.host;
-    const query = new Query<Proxy>().where('domain').is(domain);
-    const proxies = await Resource.find(Proxy, query);
+    const host = options.domain || options.host;
+    const proxies = await this.findByDomainAndPath(host);
 
     if (!proxies.length) {
-      proxies.push(new Proxy({ domain }))
+      const [domain, path = ''] = host.split('/');
+      proxies.push(new Proxy({ domain, path }));
     }
 
     for (const proxy of proxies) {
-      ['target', 'cors', 'redirect', 'redirectUrl'].forEach(p => p in options && (proxy[p] = options[p]));
+      ['target', 'cors', 'redirect', 'redirectUrl'].forEach((p) => p in options && (proxy[p] = options[p]));
       await proxy.save();
     }
 
@@ -69,23 +72,16 @@ export class ProxyManager {
 
   removeProxy(options: DomainAndTarget) {
     return new Promise(async (resolve, reject) => {
-      if (!options.domain && !options.host) {
+      const host = options.domain || options.host;
+
+      if (!host) {
         return reject(domainNotSpecifiedError);
       }
 
-      const query = new Query<Proxy>().where('domain').is(options.domain || options.host);
-
-      if (options.target) {
-        query.where('target').is(options.target);
-      }
-
-      const proxy = await Resource.find(
-        Proxy,
-        query,
-      );
+      const proxies = await this.findByDomainAndPath(host);
 
       try {
-        for (const p of proxy) {
+        for (const p of proxies) {
           await p.remove();
         }
         resolve(true);
@@ -97,7 +93,8 @@ export class ProxyManager {
 
   async getDomainList() {
     const proxies = await Resource.find(Proxy, new Query<Proxy>());
-    return proxies.map((proxy) => proxy.domain);
+    const list = proxies.map((proxy) => proxy.domain);
+    return [...new Set(list)];
   }
 
   async getProxyList() {
@@ -105,6 +102,14 @@ export class ProxyManager {
   }
 
   getProxyListForDomain(options: Domain) {
-    return Resource.find(Proxy, new Query<Proxy>().where('domain').is(options.domain || options.host));
+    return this.findByDomainAndPath(options.domain || options.host);
+  }
+
+  private async findByDomainAndPath(string: string) {
+    const [domain, path = ''] = string.split('/');
+    const query = new Query<Proxy>().where('domain').is(domain).where('path').is(path);
+    const proxies = await Resource.find(Proxy, query);
+
+    return proxies;
   }
 }
