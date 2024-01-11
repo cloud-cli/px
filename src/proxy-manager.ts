@@ -84,7 +84,7 @@ export class ProxyManager {
         for (const p of proxies) {
           await p.remove();
         }
-        resolve(true);
+        resolve({ found: proxies.length });
       } catch (error) {
         reject(error);
       }
