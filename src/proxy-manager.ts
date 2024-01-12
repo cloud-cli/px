@@ -107,7 +107,12 @@ export class ProxyManager {
 
   private async findByDomainAndPath(string: string) {
     const [domain, path = ''] = string.split('/');
-    const query = new Query<Proxy>().where('domain').is(domain).where('path').is(path);
+    const query = new Query<Proxy>().where('domain').is(domain);
+    
+    if (path) {
+      query.where('path').is(path);
+    }
+    
     const proxies = await Resource.find(Proxy, query);
 
     return proxies;
