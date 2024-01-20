@@ -17,15 +17,18 @@ async function reload() {
   const targets = await loadTargets();
   px.reset();
 
-  targets.forEach(t => {
-    px.add(new ProxyEntry({
-      domain: t.domain,
-      target: t.target,
-      path: t.path,
-      redirectToHttps: t.redirect,
-      redirectToUrl: t.redirectUrl,
-      cors: t.cors,
-    }));
+  targets.forEach((t) => {
+    px.add(
+      new ProxyEntry({
+        domain: t.domain,
+        target: t.target,
+        path: t.path,
+        redirectToHttps: t.redirect,
+        redirectToUrl: t.redirectUrl,
+        cors: t.cors,
+        headers: t.headers,
+      }),
+    );
   });
 
   px.start();

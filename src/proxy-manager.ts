@@ -41,6 +41,7 @@ export class ProxyManager {
         cors: !!proxy.cors,
         redirect: !!proxy.redirect,
         redirectUrl: proxy.redirectUrl || '',
+        headers: proxy.headers || '',
       });
 
       try {
@@ -62,8 +63,9 @@ export class ProxyManager {
       proxies.push(new Proxy({ domain, path }));
     }
 
+    const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers'];
     for (const proxy of proxies) {
-      ['target', 'cors', 'redirect', 'redirectUrl'].forEach((p) => p in options && (proxy[p] = options[p]));
+      properties.forEach((p) => p in options && (proxy[p] = options[p]));
       await proxy.save();
     }
 
@@ -108,11 +110,11 @@ export class ProxyManager {
   private async findByDomainAndPath(string: string) {
     const [domain, path = ''] = string.split('/');
     const query = new Query<Proxy>().where('domain').is(domain);
-    
+
     if (path) {
       query.where('path').is(path);
     }
-    
+
     const proxies = await Resource.find(Proxy, query);
 
     return proxies;
