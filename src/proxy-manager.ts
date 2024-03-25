@@ -42,6 +42,7 @@ export class ProxyManager {
         redirect: !!proxy.redirect,
         redirectUrl: proxy.redirectUrl || '',
         headers: proxy.headers || '',
+        authorization: proxy.authorization,
       });
 
       try {
@@ -63,7 +64,7 @@ export class ProxyManager {
       proxies.push(new Proxy({ domain, path }));
     }
 
-    const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers'];
+    const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers', 'authorization'];
     for (const proxy of proxies) {
       properties.forEach((p) => p in options && (proxy[p] = options[p]));
       await proxy.save();

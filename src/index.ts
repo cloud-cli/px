@@ -27,6 +27,7 @@ async function reload() {
         redirectToUrl: t.redirectUrl,
         cors: t.cors,
         headers: t.headers,
+        authorization: t.authorization,
       }),
     );
   });

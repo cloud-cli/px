@@ -10,6 +10,7 @@ export class Proxy extends Resource {
   @Property(Number) redirect: boolean;
   @Property(String) redirectUrl: string;
   @Property(String) headers: string;
+  @Property(String) authorization: string;
   @Property(Number) cors: boolean;
 
   constructor(p: Partial<Proxy>) {
