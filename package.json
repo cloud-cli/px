@@ -7,8 +7,7 @@
   "types": "./dist/index.d.ts",
   "prettier": "@cloud-cli/prettier-config",
   "scripts": {
-    "test": "echo jest",
-    "tdd": "jest --watchAll",
+    "test": "echo true",
     "build": "rm -rf ./dist/* && tsc"
   },
   "keywords": [
@@ -16,9 +15,10 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@cloud-cli/jest-config": "^1.0.0",
     "@cloud-cli/prettier-config": "^1.0.0",
-    "@cloud-cli/typescript-config": "^1.0.1"
+    "@cloud-cli/typescript-config": "^1.0.1",
+    "@types/node": "^20.11.30",
+    "typescript": "^5.4.3"
   },
   "repository": {
     "type": "git",
