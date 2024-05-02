@@ -35,7 +35,7 @@ export interface DomainAndTarget extends Domain {
   target: string;
 }
 
-export interface Proxy{
+export interface Proxy {
   domain: string;
   target: string;
   redirect: boolean;
@@ -76,7 +76,7 @@ export class ProxyManager {
       authorization: proxy.authorization,
     };
 
-    await set(domainAndPath, entry)
+    await set(domainAndPath, entry);
 
     return entry;
   }
@@ -160,6 +160,6 @@ export class ProxyManager {
     const [domain, path = ''] = string.split('/');
     const proxies = await getAll();
 
-    return proxies.filter(p => p.domain === domain && (!path || domain === path));
+    return proxies.filter((p) => p.domain === domain && (!path || domain === path));
   }
 }
