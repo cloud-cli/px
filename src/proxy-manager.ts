@@ -3,7 +3,7 @@ import { ProxyEntry, ProxyServer, ProxySettings } from '@cloud-cli/proxy';
 
 const domainNotSpecifiedError = new Error('Domain not specified');
 const targetNotSpecifiedError = new Error('Target not specified');
-const { get, set, remove, getAll } = getStorage<Proxy>('px');
+const { set, remove, getAll } = getStorage<Proxy>('px');
 
 const settings = new ProxySettings({
   certificatesFolder: process.env.PX_CERTS_FOLDER || '/etc/letsencrypt/live',
