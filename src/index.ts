@@ -3,7 +3,6 @@ import { ProxyManager, DomainAndTarget, Domain, Proxy } from './proxy-manager.js
 
 type ExtraProps = { _: string[] };
 const manager = new ProxyManager();
-
 async function add(options: Proxy & ExtraProps) {
   const proxy = await manager.addProxy(options);
   await manager.reload();

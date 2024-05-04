@@ -29,6 +29,8 @@ All available options:
 - `cors`: handle CORS request on proxy level. See notes below!
 - `redirect`: if request comes as http, redirect to https
 - `redirectUrl`: if provided, issues a `Location` header and terminates with status 302 instead of proxying a request
+- `headers`: comma separated headers to set in the outbound connection, e.g. authorisation headers
+- `authorization`: matches incoming request headers against this value. If strings match, requests can continue.
 
 **Remove a proxy**
 
@@ -89,4 +91,3 @@ Every request has additional headers:
 If a proxy is from 'https://foo.example.com' to 'http://localhost:1234', the header will be 'foo.example.com'
 - x-forwarded-proto: 'http' or 'https', depends on the original request
 - forwarded: the standard header with the same information as the other two above
-

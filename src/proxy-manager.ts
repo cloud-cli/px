@@ -1,14 +1,23 @@
-import { getStorage } from '@cloud-cli/cli';
+import { getStorage, getConfig } from '@cloud-cli/cli';
 import { ProxyEntry, ProxyServer, ProxySettings } from '@cloud-cli/proxy';
+
+const defaultOptions = {
+  httpPort: 80,
+  httpsPort: 443,
+  certsFolder: process.env.PX_CERTS_FOLDER || '/etc/letsencrypt/live',
+};
 
 const domainNotSpecifiedError = new Error('Domain not specified');
 const targetNotSpecifiedError = new Error('Target not specified');
+const moduleConfig = await getConfig('px', defaultOptions);
 const { set, remove, getAll } = getStorage<Proxy>('px');
 
 const settings = new ProxySettings({
-  certificatesFolder: process.env.PX_CERTS_FOLDER || '/etc/letsencrypt/live',
+  certificatesFolder: moduleConfig.certsFolder,
   certificateFile: 'fullchain.pem',
   keyFile: 'privkey.pem',
+  httpPort: moduleConfig.httpPort,
+  httpsPort: moduleConfig.httpsPort,
 });
 
 const px = new ProxyServer(settings);
