@@ -3,44 +3,39 @@ import { ProxyManager, DomainAndTarget, Domain, Proxy } from './proxy-manager.js
 
 type ExtraProps = { _: string[] };
 const manager = new ProxyManager();
-async function add(options: Proxy & ExtraProps) {
-  const proxy = await manager.addProxy(options);
-  await manager.reload();
-  return proxy;
-}
 
-async function remove(options: DomainAndTarget) {
-  const removed = await manager.removeProxy(options);
-  await manager.reload();
-  return removed;
-}
+export default {
+  async add(options: Proxy & ExtraProps) {
+    return manager.addProxy(options);
+  },
 
-async function update(options: Proxy & ExtraProps) {
-  const output = await manager.updateProxy(options);
-  await manager.reload();
-  return output;
-}
+  async remove(options: DomainAndTarget) {
+    return manager.removeProxy(options);
+  },
 
-function list() {
-  return manager.getProxyList();
-}
+  async update(options: Proxy & ExtraProps) {
+    return await manager.updateProxy(options);
+  },
 
-function get(options: Domain) {
-  return manager.getProxyListForDomain(options);
-}
+  list() {
+    return manager.getProxyList();
+  },
 
-function domains() {
-  return manager.getDomainList();
-}
+  get(options: Domain) {
+    return manager.getProxyListForDomain(options);
+  },
 
-async function initServer() {
-  await manager.reload();
-  return manager.server;
-}
+  domains() {
+    return manager.getDomainList();
+  },
 
-async function reload() {
-  logInfo('Reloading proxy server');
-  return await manager.reload();
-}
+  async [init]() {
+    await manager.reload();
+    return manager.server;
+  },
 
-export default { add, remove, list, get, update, domains, reload, [init]: initServer };
+  async reload() {
+    logInfo('Reloading proxy server');
+    return await manager.reload();
+  },
+};

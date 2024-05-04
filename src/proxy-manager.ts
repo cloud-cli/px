@@ -10,7 +10,7 @@ const defaultOptions = {
 const domainNotSpecifiedError = new Error('Domain not specified');
 const targetNotSpecifiedError = new Error('Target not specified');
 const moduleConfig = await getConfig('px', defaultOptions);
-const { set, remove, getAll } = getStorage<Proxy>('px');
+const { set, get, remove, getAll } = getStorage<Proxy>('px');
 
 const settings = new ProxySettings({
   certificatesFolder: moduleConfig.certsFolder,
@@ -21,15 +21,6 @@ const settings = new ProxySettings({
 });
 
 const px = new ProxyServer(settings);
-const emptyProxy = {
-  domain: '',
-  target: '',
-  cors: false,
-  redirect: false,
-  redirectUrl: '',
-  headers: '',
-  authorization: '',
-};
 
 interface OptionalProps {
   host?: string;
@@ -53,6 +44,16 @@ export interface Proxy {
   authorization: string;
   cors: boolean;
 }
+
+const emptyProxy: Proxy = {
+  domain: '',
+  target: '',
+  cors: false,
+  redirect: false,
+  redirectUrl: '',
+  headers: '',
+  authorization: '',
+};
 
 type KeysOf<T> = {
   [K in keyof T]: T[K] extends () => any ? never : K;
@@ -86,25 +87,26 @@ export class ProxyManager {
     };
 
     await set(domainAndPath, entry);
+    await this.reload();
 
     return entry;
   }
 
   async updateProxy(options: ClassProperties<Proxy> & OptionalProps) {
     const host = options.domain || options.host || options._[0];
-    const proxies = await this.findByDomainAndPath(host);
+    let proxy = await get(host);
 
-    if (!proxies.length) {
-      proxies.push({ ...emptyProxy, domain: host });
+    if (!proxy) {
+      proxy = { ...emptyProxy, domain: host };
     }
 
     const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers', 'authorization'];
-    for (const proxy of proxies) {
-      properties.forEach((p) => p in options && (proxy[p] = options[p]));
-      set(proxy.domain, proxy);
-    }
+    properties.forEach((p) => p in options && (proxy[p] = options[p]));
+    set(proxy.domain, proxy);
 
-    return true;
+    await this.reload();
+
+    return proxy;
   }
 
   removeProxy(options: DomainAndTarget) {
@@ -121,6 +123,9 @@ export class ProxyManager {
         for (const p of proxies) {
           await remove(p.domain);
         }
+
+        await this.reload();
+
         resolve({ found: proxies.length });
       } catch (error) {
         reject(error);
@@ -169,6 +174,6 @@ export class ProxyManager {
     const [domain, path = ''] = string.split('/');
     const proxies = await getAll();
 
-    return proxies.filter((p) => p.domain === domain && (!path || domain === path));
+    return proxies.filter((p) => p.domain === domain);
   }
 }
