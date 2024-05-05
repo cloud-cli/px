@@ -138,8 +138,18 @@ export class ProxyManager {
     return proxies.map((proxy) => proxy.domain);
   }
 
-  async getProxyList() {
-    return await getAll();
+  async getProxyList(filters: Partial<Proxy> = {}): Promise<Proxy[]> {
+    const list = await getAll();
+    const keys = Object.keys(filters) as Array<keyof Proxy>;
+
+    if (!keys.length) {
+      return list;
+    }
+
+    return keys.reduce((list, key) => {
+      const filter = String(filters[key]).toLowerCase();
+      return list.filter((p) => String(p[key]).toLowerCase().includes(filter));
+    }, list);
   }
 
   getProxyListForDomain(options: Domain) {

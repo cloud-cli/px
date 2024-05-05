@@ -17,8 +17,8 @@ export default {
     return await manager.updateProxy(options);
   },
 
-  list() {
-    return manager.getProxyList();
+  list(filters: Partial<Proxy>) {
+    return manager.getProxyList(filters);
   },
 
   get(options: Domain) {
