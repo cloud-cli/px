@@ -1,5 +1,6 @@
 import { getStorage, getConfig } from '@cloud-cli/cli';
 import { ProxyEntry, ProxyServer, ProxySettings } from '@cloud-cli/proxy';
+import type { DomainAndTarget, DomainName, Proxy, WithOptionalProps } from './types.js';
 
 const defaultOptions = {
   httpPort: 80,
@@ -10,8 +11,7 @@ const defaultOptions = {
 const domainNotSpecifiedError = new Error('Domain not specified');
 const targetNotSpecifiedError = new Error('Target not specified');
 const moduleConfig = await getConfig('px', defaultOptions);
-const { set, get, remove, getAll } = getStorage<Proxy>('px');
-
+const { set, get, has, remove, getAll } = getStorage<Proxy>('px');
 const settings = new ProxySettings({
   certificatesFolder: moduleConfig.certsFolder,
   certificateFile: 'fullchain.pem',
@@ -21,29 +21,6 @@ const settings = new ProxySettings({
 });
 
 const px = new ProxyServer(settings);
-
-interface OptionalProps {
-  host?: string;
-  _: string[];
-}
-
-export interface Domain extends OptionalProps {
-  domain: string;
-}
-
-export interface DomainAndTarget extends Domain {
-  target: string;
-}
-
-export interface Proxy {
-  domain: string;
-  target: string;
-  redirect: boolean;
-  redirectUrl: string;
-  headers: string;
-  authorization: string;
-  cors: boolean;
-}
 
 const emptyProxy: Proxy = {
   domain: '',
@@ -55,19 +32,16 @@ const emptyProxy: Proxy = {
   authorization: '',
 };
 
-type KeysOf<T> = {
-  [K in keyof T]: T[K] extends () => any ? never : K;
-}[keyof T];
-
-type ClassProperties<T> = {
-  [K in KeysOf<T>]: T[K] extends never ? never : T[K];
-};
+const readDomain = (options: WithOptionalProps<DomainName>) =>
+  (options.domain = options.domain || options.host || options._[0]);
 
 export class ProxyManager {
   server = px;
 
-  async addProxy(proxy: ClassProperties<Proxy> & OptionalProps) {
-    if (!proxy.domain && !proxy.host) {
+  async addProxy(proxy: WithOptionalProps<Proxy>) {
+    readDomain(proxy);
+
+    if (!proxy.domain) {
       throw domainNotSpecifiedError;
     }
 
@@ -75,9 +49,8 @@ export class ProxyManager {
       throw targetNotSpecifiedError;
     }
 
-    const domainAndPath = proxy.domain || proxy.host || proxy._[0];
     const entry: Proxy = {
-      domain: domainAndPath,
+      domain: proxy.domain,
       target: proxy.target,
       cors: !!proxy.cors,
       redirect: !!proxy.redirect,
@@ -86,22 +59,29 @@ export class ProxyManager {
       authorization: proxy.authorization,
     };
 
-    await set(domainAndPath, entry);
+    set(proxy.domain, entry);
     await this.reload();
 
     return entry;
   }
 
-  async updateProxy(options: ClassProperties<Proxy> & OptionalProps) {
-    const host = options.domain || options.host || options._[0];
-    let proxy = await get(host);
+  async updateProxy(options: WithOptionalProps<Proxy>) {
+    readDomain(options);
+
+    const host = options.domain;
+    let proxy: Proxy = get(host);
 
     if (!proxy) {
       proxy = { ...emptyProxy, domain: host };
     }
 
     const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers', 'authorization'];
-    properties.forEach((p) => p in options && (proxy[p] = options[p]));
+    properties.forEach((p) => {
+      if (p in options) {
+        proxy[p] = options[p];
+      }
+    });
+
     set(proxy.domain, proxy);
 
     await this.reload();
@@ -109,37 +89,30 @@ export class ProxyManager {
     return proxy;
   }
 
-  removeProxy(options: DomainAndTarget) {
-    return new Promise(async (resolve, reject) => {
-      const host = options.domain || options.host;
+  async removeProxy(options: WithOptionalProps<DomainAndTarget>) {
+    readDomain(options);
+    const host = options.domain;
 
-      if (!host) {
-        return reject(domainNotSpecifiedError);
-      }
+    if (!host) {
+      throw domainNotSpecifiedError;
+    }
 
-      const proxies = await this.findByDomainAndPath(host);
+    if (has(host)) {
+      remove(host);
+      await this.reload();
+      return true;
+    }
 
-      try {
-        for (const p of proxies) {
-          await remove(p.domain);
-        }
-
-        await this.reload();
-
-        resolve({ found: proxies.length });
-      } catch (error) {
-        reject(error);
-      }
-    });
+    return false;
   }
 
   async getDomainList() {
-    const proxies = await getAll();
+    const proxies = getAll();
     return proxies.map((proxy) => proxy.domain);
   }
 
   async getProxyList(filters: Partial<Proxy> = {}): Promise<Proxy[]> {
-    const list = await getAll();
+    const list = getAll();
     const keys = Object.keys(filters) as Array<keyof Proxy>;
 
     if (!keys.length) {
@@ -152,8 +125,10 @@ export class ProxyManager {
     }, list);
   }
 
-  getProxyListForDomain(options: Domain) {
-    return this.findByDomainAndPath(options.domain || options.host);
+  getProxyListForDomain(options: WithOptionalProps<DomainName>) {
+    readDomain(options);
+    const all = getAll();
+    return all.filter((p) => p.domain === options.domain);
   }
 
   async reload() {
@@ -178,12 +153,5 @@ export class ProxyManager {
     });
 
     px.start();
-  }
-
-  private async findByDomainAndPath(string: string) {
-    const [domain, path = ''] = string.split('/');
-    const proxies = await getAll();
-
-    return proxies.filter((p) => p.domain === domain);
   }
 }

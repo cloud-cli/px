@@ -1,19 +1,19 @@
 import { init, logInfo } from '@cloud-cli/cli';
-import { ProxyManager, DomainAndTarget, Domain, Proxy } from './proxy-manager.js';
+import { ProxyManager } from './proxy-manager.js';
+import { DomainAndTarget, DomainName, Proxy, WithOptionalProps } from './types.js';
 
-type ExtraProps = { _: string[] };
 const manager = new ProxyManager();
 
 export default {
-  async add(options: Proxy & ExtraProps) {
+  async add(options: WithOptionalProps<Proxy>) {
     return manager.addProxy(options);
   },
 
-  async remove(options: DomainAndTarget) {
+  async remove(options: WithOptionalProps<DomainAndTarget>) {
     return manager.removeProxy(options);
   },
 
-  async update(options: Proxy & ExtraProps) {
+  async update(options: WithOptionalProps<Proxy>) {
     return await manager.updateProxy(options);
   },
 
@@ -21,7 +21,7 @@ export default {
     return manager.getProxyList(filters);
   },
 
-  get(options: Domain) {
+  get(options: DomainName) {
     return manager.getProxyListForDomain(options);
   },
 

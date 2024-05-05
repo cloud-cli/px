@@ -16,21 +16,23 @@ export default { proxy };
 
 ## API
 
+All proxies have the following properties:
+
+| Options         | Description                                                                                          |
+| --------------- | ---------------------------------------------------------------------------------------------------- |
+| `domain`        | Required. entrypoint for reverse proxy                                                               |
+| `target`        | Required. Any target address, can be local or remote                                                 |
+| `cors`          | handle CORS request on proxy level. See notes below!                                                 |
+| `redirect`      | if request comes as http, redirect to https                                                          |
+| `redirectUrl`   | if provided, issues a `Location` header and terminates with status 302 instead of proxying a request |
+| `headers`       | comma separated headers to set in the outbound connection, e.g. authorisation headers                |
+| `authorization` | matches incoming request headers against this value. If strings match, requests can continue.        |
+
 **Add a proxy to a local service**
 
 ```bash
 cy proxy.add --domain "foo.example.com" --target "http://localhost:1234"
 ```
-
-All available options:
-
-- `domain`: entrypoint for reverse proxy
-- `target`: any target for requests, can be local or remote
-- `cors`: handle CORS request on proxy level. See notes below!
-- `redirect`: if request comes as http, redirect to https
-- `redirectUrl`: if provided, issues a `Location` header and terminates with status 302 instead of proxying a request
-- `headers`: comma separated headers to set in the outbound connection, e.g. authorisation headers
-- `authorization`: matches incoming request headers against this value. If strings match, requests can continue.
 
 **Remove a proxy**
 
@@ -88,6 +90,6 @@ CORS handling on proxy level is convenient, **but a security risk**. Beware:
 Every request has additional headers:
 
 - x-forwarded-for: the host of the original request.
-If a proxy is from 'https://foo.example.com' to 'http://localhost:1234', the header will be 'foo.example.com'
+  If a proxy is from 'https://foo.example.com' to 'http://localhost:1234', the header will be 'foo.example.com'
 - x-forwarded-proto: 'http' or 'https', depends on the original request
 - forwarded: the standard header with the same information as the other two above
