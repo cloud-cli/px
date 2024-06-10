@@ -27,6 +27,7 @@ const emptyProxy: Proxy = {
   target: '',
   cors: false,
   redirect: false,
+  preserveHost: false,
   redirectUrl: '',
   headers: '',
   authorization: '',
@@ -34,6 +35,30 @@ const emptyProxy: Proxy = {
 
 const readDomain = (options: WithOptionalProps<DomainName>) =>
   (options.domain = options.domain || options.host || options._[0]);
+
+const numberRe = /^[0-9]+$/;
+const readOption = value => {
+  switch(true) {
+    case value === 'true':
+      return true;
+    case value === 'false':
+      return false;
+    case numberRe.test(value):
+      return Number(value);
+    default:
+      return value;
+  }
+}
+
+function applyProperties(proxy: Proxy, options: Partial<Proxy>) {
+  const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers', 'authorization', 'preserveHost'];
+
+  properties.forEach((p) => {
+    if (p in options) {
+      proxy[p] = readOption(options[p]);
+    }
+  });
+}
 
 export class ProxyManager {
   server = px;
@@ -49,16 +74,8 @@ export class ProxyManager {
       throw targetNotSpecifiedError;
     }
 
-    const entry: Proxy = {
-      domain: proxy.domain,
-      target: proxy.target,
-      cors: !!proxy.cors,
-      redirect: !!proxy.redirect,
-      redirectUrl: proxy.redirectUrl || '',
-      headers: proxy.headers || '',
-      authorization: proxy.authorization,
-    };
-
+    const entry: Proxy = { ...emptyProxy };
+    applyProperties(entry, proxy);
     set(proxy.domain, entry);
     await this.reload();
 
@@ -75,13 +92,7 @@ export class ProxyManager {
       proxy = { ...emptyProxy, domain: host };
     }
 
-    const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers', 'authorization'];
-    properties.forEach((p) => {
-      if (p in options) {
-        proxy[p] = options[p];
-      }
-    });
-
+    applyProperties(proxy, options);
     set(proxy.domain, proxy);
 
     await this.reload();
