@@ -20,7 +20,6 @@ export interface Proxy {
   headers: string;
   authorization: string;
   cors: boolean;
-  preserveHost: boolean;
 }
 
 export type WithOptionalProps<T extends object> = T & OptionalProps;

@@ -27,7 +27,6 @@ const emptyProxy: Proxy = {
   target: '',
   cors: false,
   redirect: false,
-  preserveHost: false,
   redirectUrl: '',
   headers: '',
   authorization: '',
@@ -51,7 +50,7 @@ const readOption = value => {
 }
 
 function applyProperties(proxy: Proxy, options: Partial<Proxy>) {
-  const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers', 'authorization', 'preserveHost'];
+  const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers', 'authorization'];
 
   properties.forEach((p) => {
     if (p in options) {
