@@ -85,11 +85,15 @@ export class ProxyManager {
   async updateProxy(options: WithOptionalProps<Proxy>) {
     readDomain(options);
 
-    const host = options.domain;
-    let proxy: Proxy = get(host);
+    const domain = options.domain;
+    let proxy: Proxy = get(domain);
+
+    if (!domain) {
+      throw domainNotSpecifiedError;
+    }
 
     if (!proxy) {
-      proxy = { ...emptyProxy, domain: host };
+      proxy = { ...emptyProxy, domain };
     }
 
     applyProperties(proxy, options);
