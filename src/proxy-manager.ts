@@ -62,23 +62,23 @@ function applyProperties(proxy: Proxy, options: Partial<Proxy>) {
 export class ProxyManager {
   server = px;
 
-  async addProxy(proxy: WithOptionalProps<Proxy>) {
-    readDomain(proxy);
+  async addProxy(properties: WithOptionalProps<Proxy>) {
+    readDomain(properties);
 
-    if (!proxy.domain) {
+    if (!properties.domain) {
       throw domainNotSpecifiedError;
     }
 
-    if (!proxy.target && !proxy.redirectUrl) {
+    if (!properties.target && !properties.redirectUrl) {
       throw targetNotSpecifiedError;
     }
 
-    const entry: Proxy = { ...emptyProxy };
-    applyProperties(entry, proxy);
-    set(proxy.domain, entry);
+    const proxy: Proxy = { ...emptyProxy, domain: properties.domain };
+    applyProperties(proxy, properties);
+    set(properties.domain, proxy);
     await this.reload();
 
-    return entry;
+    return proxy;
   }
 
   async updateProxy(options: WithOptionalProps<Proxy>) {
