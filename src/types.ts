@@ -16,6 +16,7 @@ export interface Proxy {
   domain: string;
   target: string;
   redirect: boolean;
+  preserveHost: boolean;
   redirectUrl: string;
   headers: string;
   authorization: string;
