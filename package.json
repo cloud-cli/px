@@ -8,7 +8,7 @@
   "prettier": "@cloud-cli/prettier-config",
   "scripts": {
     "test": "echo true",
-    "build": "rm -rf ./dist/* && tsc"
+    "build": "rm -rf ./dist/* && npm update && tsc"
   },
   "keywords": [
     "cloudy"

@@ -53,11 +53,11 @@ const readOption = value => {
 function applyProperties(proxy: Proxy, options: Partial<Proxy>) {
   const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers', 'authorization', 'preserveHost'];
 
-  properties.forEach((p) => {
+  for ( const p of properties) {
     if (p in options) {
       proxy[p] = readOption(options[p]);
     }
-  });
+  }
 }
 
 export class ProxyManager {
@@ -163,6 +163,7 @@ export class ProxyManager {
           cors: t.cors,
           headers: t.headers,
           authorization: t.authorization,
+          preserveHost: t.preserveHost,
         }),
       );
     });
