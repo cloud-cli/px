@@ -193,7 +193,7 @@ export class ProxyManager {
 function readProxyFromContainer(c: DockerContainer): Proxy {
   return {
     domain: [c.labels.host, c.labels.path].join("/"),
-    target: `http://localhost:${t.ports[0].host}`,
+    target: `http://localhost:${c.ports[0].host}`,
     redirect: true,
     redirectUrl: "",
     cors: true,
