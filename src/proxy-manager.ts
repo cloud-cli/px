@@ -123,12 +123,15 @@ export class ProxyManager {
   }
 
   async getDomainList() {
-    const proxies = getAll();
+    const proxies = await this.getProxyList();
     return proxies.map((proxy) => proxy.domain);
   }
 
   async getProxyList(filters: Partial<Proxy> = {}): Promise<Proxy[]> {
-    const list = getAll();
+    const staticRoutes = getAll();
+    const containers = await this.getRunningContainers();
+    const list = [...staticRoutes, ...containers.map(readProxyFromContainer)];
+
     const keys = Object.keys(filters) as Array<keyof Proxy>;
 
     if (!keys.length) {
@@ -141,17 +144,20 @@ export class ProxyManager {
     }, list);
   }
 
-  getProxyListForDomain(options: WithOptionalProps<DomainName>) {
+  async getProxyListForDomain(options: WithOptionalProps<DomainName>) {
     readDomain(options);
-    const all = getAll();
+    const all = await this.getProxyList();
     return all.filter((p) => p.domain === options.domain);
   }
 
   async reload() {
     const targets = await getAll();
+    const containers = await this.getRunningContainers();
+    const all = [...targets, ...containers.map(readProxyFromContainer)];
+
     px.reset();
 
-    for (const t of targets) {
+    for (const t of all) {
       const [domain, path = ""] = t.domain.split("/");
 
       px.add(
@@ -169,22 +175,6 @@ export class ProxyManager {
       );
     }
 
-    const dockerTargets = await this.getRunningContainers();
-
-    for (const t of dockerTargets) {
-      if (!t.ports.length || !t.labels.host) continue;
-
-      px.add(
-        new ProxyEntry({
-          domain: t.labels.host,
-          path: t.labels.path || '',
-          target: `http://localhost:${t.ports[0].host}`,
-          redirectToHttps: true,
-          cors: true,
-        })
-      );
-    }
-
     px.start();
   }
 
@@ -194,10 +184,24 @@ export class ProxyManager {
     const state = await exec("docker", ["inspect", ...ids]);
     const json: any[] = JSON.parse(state.stdout);
 
-    return json.map(readDockerContainer);
+    return json
+      .map(readDockerContainer)
+      .filter(d => d.ports.length && !d.labels.host);
   }
 }
 
+function readProxyFromContainer(c: DockerContainer): Proxy {
+  return {
+    domain: [c.labels.host, c.labels.path].join("/"),
+    target: `http://localhost:${t.ports[0].host}`,
+    redirect: true,
+    redirectUrl: "",
+    cors: true,
+    authorization: "",
+    preserveHost: false,
+    headers: "",
+  };
+}
 
 function readDockerContainer(d): DockerContainer {
   const labels: Record<string, string> = Object.fromEntries<any>(
