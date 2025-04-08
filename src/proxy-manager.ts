@@ -186,7 +186,7 @@ export class ProxyManager {
 
     return json
       .map(readDockerContainer)
-      .filter(d => d.ports.length && !d.labels.host);
+      .filter(d => d.ports.length && d.labels.host);
   }
 }
 
