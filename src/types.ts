@@ -24,3 +24,12 @@ export interface Proxy {
 }
 
 export type WithOptionalProps<T extends object> = T & OptionalProps;
+
+export interface DockerContainer {
+  id: string;
+  image: string;
+  name: string;
+  state: string;
+  ports: Array<{ host: number, container: number }>;
+  labels: Record<string, string>;
+}

@@ -1,6 +1,7 @@
 import { getStorage, getConfig } from '@cloud-cli/cli';
 import { ProxyEntry, ProxyServer, ProxySettings } from '@cloud-cli/proxy';
-import type { DomainAndTarget, DomainName, Proxy, WithOptionalProps } from './types.js';
+import type { DockerContainer, DomainAndTarget, DomainName, Proxy, WithOptionalProps } from './types.js';
+import { exec } from '@cloud-cli/exec';
 
 const defaultOptions = {
   httpPort: 80,
@@ -150,8 +151,8 @@ export class ProxyManager {
     const targets = await getAll();
     px.reset();
 
-    targets.forEach((t) => {
-      const [domain, path = ''] = t.domain.split('/');
+    for (const t of targets) {
+      const [domain, path = ""] = t.domain.split("/");
 
       px.add(
         new ProxyEntry({
@@ -164,10 +165,56 @@ export class ProxyManager {
           headers: t.headers,
           authorization: t.authorization,
           preserveHost: t.preserveHost,
-        }),
+        })
       );
-    });
+    }
+
+    const dockerTargets = await this.getRunningContainers();
+
+    for (const t of dockerTargets) {
+      if (!t.ports.length || !t.labels.host) continue;
+
+      px.add(
+        new ProxyEntry({
+          domain: t.labels.host,
+          target: `http://localhost:${t.ports[0].host}`,
+          redirectToHttps: true,
+          cors: true,
+        })
+      );
+    }
 
     px.start();
   }
+
+  async getRunningContainers() {
+    const ps = await exec("docker", ["ps", "-aq"]);
+    const ids = ps.stdout.trim().split("\n");
+    const format = '--format="{{.Id}},{{.Name}},{{.State.Status}},{{.Image}}"';
+    const state = await exec("docker", ["inspect", format, ...ids]);
+    const json: any[] = JSON.parse(state.stdout);
+
+    return json.map(readDockerContainer);
+  }
+}
+
+
+function readDockerContainer(d): DockerContainer {
+  const labels: Record<string, string> = Object.fromEntries<any>(
+    Object.entries(d.Config.Labels)
+      .filter(([key]) => key.startsWith("px:"))
+      .map(([key, value]) => [key.replace("px:", ""), value])
+  );
+
+  return {
+    id: d.Id,
+    image: d.Image,
+    state: d.State.Status,
+    name: d.Name,
+    labels: labels,
+    ports: Object.entries(d.HostConfig.PortBindings).map(([port, pb]) => ({
+      container: Number(port.replace(/\D+/, "")),
+      host: Number(pb[0].HostPort),
+    })),
+  };
 }
