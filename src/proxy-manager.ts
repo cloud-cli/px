@@ -177,6 +177,7 @@ export class ProxyManager {
       px.add(
         new ProxyEntry({
           domain: t.labels.host,
+          path: t.labels.path || '',
           target: `http://localhost:${t.ports[0].host}`,
           redirectToHttps: true,
           cors: true,
