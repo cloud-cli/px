@@ -191,8 +191,7 @@ export class ProxyManager {
   async getRunningContainers() {
     const ps = await exec("docker", ["ps", "-aq"]);
     const ids = ps.stdout.trim().split("\n");
-    const format = '--format="{{.Id}},{{.Name}},{{.State.Status}},{{.Image}}"';
-    const state = await exec("docker", ["inspect", format, ...ids]);
+    const state = await exec("docker", ["inspect", ...ids]);
     const json: any[] = JSON.parse(state.stdout);
 
     return json.map(readDockerContainer);
