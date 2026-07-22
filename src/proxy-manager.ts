@@ -209,7 +209,7 @@ function readProxyFromContainer(c: DockerContainer): Proxy {
 
 function readDockerContainer(d): DockerContainer {
   const labels: Record<string, string> = Object.fromEntries<any>(
-    Object.entries(d.Config.Labels)
+    Object.entries(d.Config.Labels || {})
       .filter(([key]) => key.startsWith("px:"))
       .map(([key, value]) => [key.replace("px:", ""), value])
   );
@@ -220,7 +220,7 @@ function readDockerContainer(d): DockerContainer {
     state: d.State.Status,
     name: d.Name,
     labels: labels,
-    ports: Object.entries(d.HostConfig.PortBindings).map(([port, pb]) => ({
+    ports: Object.entries(d.HostConfig.PortBindings || {}).map(([port, pb]) => ({
       container: Number(port.replace(/\D+/, "")),
       host: Number(pb[0].HostPort),
     })),
