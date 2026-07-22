@@ -34,8 +34,9 @@ const emptyProxy: Proxy = {
   authorization: '',
 };
 
-const readDomain = (options: WithOptionalProps<DomainName>) =>
-  (options.domain = options.domain || options.host || options._[0]);
+const readDomain = (options: WithOptionalProps<DomainName>) => {
+  options.domain = options.domain || options.host || options._[0];
+};
 
 const numberRe = /^[0-9]+$/;
 const readOption = value => {
@@ -127,7 +128,7 @@ export class ProxyManager {
     return proxies.map((proxy) => proxy.domain);
   }
 
-  async getProxyListWithContainers() {
+  async getProxyListWithContainers(): Promise<Proxy[]> {
     const staticRoutes = getAll();
     const containers = (await this.getRunningContainers() as any).map(readProxyFromContainer) as Proxy[];
     const containerDomains = containers.map(c => c.domain.split('/')[0]);
@@ -155,7 +156,7 @@ export class ProxyManager {
 
   async getProxyListForDomain(options: WithOptionalProps<DomainName>) {
     readDomain(options);
-    const all = await this.getProxyList();
+    const all = await this.getProxyListWithContainers();
     return all.filter((p) => p.domain.includes(options.domain));
   }
 
@@ -197,7 +198,7 @@ export class ProxyManager {
 }
 
 function readProxyFromContainer(c: DockerContainer): Proxy {
-  const domain = [c.labels.host, c.labels.path].join("/");
+  const domain = [c.labels.host, c.labels.path].filter(Boolean).join("/");
   const proxyOverrides = get(domain) || {};
 
   return {
