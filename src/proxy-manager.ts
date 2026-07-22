@@ -133,7 +133,7 @@ export class ProxyManager {
     const containerDomains = containers.map(c => c.domain.split('/')[0]);
     const list = [
       ...staticRoutes.filter(t => !containerDomains.includes(t.domain)),
-      ...containers.map(readProxyFromContainer),
+      ...containers,
     ] as Proxy[];
 
     return list;
