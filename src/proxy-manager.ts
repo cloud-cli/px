@@ -127,11 +127,20 @@ export class ProxyManager {
     return proxies.map((proxy) => proxy.domain);
   }
 
-  async getProxyList(filters: Partial<Proxy> = {}): Promise<Proxy[]> {
+  async getProxyListWithContainers() {
     const staticRoutes = getAll();
-    const containers = await this.getRunningContainers();
-    const list = [...staticRoutes, ...containers.map(readProxyFromContainer)];
+    const containers = (await this.getRunningContainers() as any).map(readProxyFromContainer) as Proxy[];
+    const containerDomains = containers.map(c => c.domain.split('/')[0]);
+    const list = [
+      ...staticRoutes.filter(t => !containerDomains.includes(t.domain)),
+      ...containers.map(readProxyFromContainer),
+    ] as Proxy[];
 
+    return list;
+  }
+
+  async getProxyList(filters: Partial<Proxy> = {}): Promise<Proxy[]> {
+    const list = await this.getProxyListWithContainers();
     const keys = Object.keys(filters) as Array<keyof Proxy>;
 
     if (!keys.length) {
@@ -151,10 +160,7 @@ export class ProxyManager {
   }
 
   async reload() {
-    const targets = await getAll();
-    const containers = await this.getRunningContainers();
-    const all = [...targets, ...containers.map(readProxyFromContainer)];
-
+    const all = await this.getProxyListWithContainers();
     px.reset();
 
     for (const t of all) {
