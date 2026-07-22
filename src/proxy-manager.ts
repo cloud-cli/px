@@ -191,16 +191,20 @@ export class ProxyManager {
 }
 
 function readProxyFromContainer(c: DockerContainer): Proxy {
+  const domain = [c.labels.host, c.labels.path].join("/");
+  const proxyOverrides = get(domain) || {};
+
   return {
-    domain: [c.labels.host, c.labels.path].join("/"),
-    target: `http://localhost:${c.ports[0].host}`,
     redirect: true,
     redirectUrl: "",
     cors: true,
     authorization: "",
     preserveHost: false,
     headers: "",
-  };
+    ...proxyOverrides,
+    domain,
+    target: `http://localhost:${c.ports[0].host}`,
+  } as Proxy;
 }
 
 function readDockerContainer(d): DockerContainer {
