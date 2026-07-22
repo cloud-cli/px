@@ -27,7 +27,7 @@ const emptyProxy: Proxy = {
   domain: '',
   target: '',
   cors: false,
-  preserveHost: false,
+  preserveHost: true,
   redirect: false,
   redirectUrl: '',
   headers: '',
@@ -54,7 +54,7 @@ const readOption = value => {
 function applyProperties(proxy: Proxy, options: Partial<Proxy>) {
   const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers', 'authorization', 'preserveHost'];
 
-  for ( const p of properties) {
+  for (const p of properties) {
     if (p in options) {
       proxy[p] = readOption(options[p]);
     }
@@ -156,7 +156,7 @@ export class ProxyManager {
   async getProxyListForDomain(options: WithOptionalProps<DomainName>) {
     readDomain(options);
     const all = await this.getProxyList();
-    return all.filter((p) => p.domain === options.domain);
+    return all.filter((p) => p.domain.includes(options.domain));
   }
 
   async reload() {
@@ -168,8 +168,8 @@ export class ProxyManager {
 
       px.add(
         new ProxyEntry({
-          domain: domain,
-          path: path,
+          domain,
+          path,
           target: t.target,
           redirectToHttps: t.redirect,
           redirectToUrl: t.redirectUrl,
@@ -201,12 +201,7 @@ function readProxyFromContainer(c: DockerContainer): Proxy {
   const proxyOverrides = get(domain) || {};
 
   return {
-    redirect: true,
-    redirectUrl: "",
-    cors: true,
-    authorization: "",
-    preserveHost: false,
-    headers: "",
+    ...emptyProxy,
     ...proxyOverrides,
     domain,
     target: `http://localhost:${c.ports[0].host}`,
