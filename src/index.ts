@@ -1,8 +1,22 @@
-import { init, logInfo } from '@cloud-cli/cli';
+import { init, help, logInfo } from '@cloud-cli/cli';
 import { ProxyManager } from './proxy-manager.js';
 import { DomainAndTarget, DomainName, Proxy, WithOptionalProps } from './types.js';
 
 const manager = new ProxyManager();
+
+const pxHelp = {
+  description: 'Reverse proxy management',
+  commands: {
+    add: 'Add a proxy (requires domain and target)',
+    remove: 'Remove a proxy',
+    update: 'Update a proxy',
+    list: 'List proxies',
+    get: 'Get proxy for domain',
+    domains: 'List all domains',
+    init: 'Initialize/reload proxy server',
+    reload: 'Reload proxy server',
+  },
+};
 
 export default {
   async add(options: WithOptionalProps<Proxy>) {
@@ -38,17 +52,6 @@ export default {
     logInfo('Reloading proxy server');
     return await manager.reload();
   },
-  help: {
-    description: 'Reverse proxy management',
-    commands: {
-      add: 'Add a proxy (requires domain and target)',
-      remove: 'Remove a proxy',
-      update: 'Update a proxy',
-      list: 'List proxies',
-      get: 'Get proxy for domain',
-      domains: 'List all domains',
-      init: 'Initialize/reload proxy server',
-      reload: 'Reload proxy server',
-    },
-  },
+  help: pxHelp,
+  [help]: pxHelp,
 };
