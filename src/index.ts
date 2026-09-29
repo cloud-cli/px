@@ -38,4 +38,17 @@ export default {
     logInfo('Reloading proxy server');
     return await manager.reload();
   },
+  help: {
+    description: 'Reverse proxy management',
+    commands: {
+      add: 'Add a proxy (requires domain and target)',
+      remove: 'Remove a proxy',
+      update: 'Update a proxy',
+      list: 'List proxies',
+      get: 'Get proxy for domain',
+      domains: 'List all domains',
+      init: 'Initialize/reload proxy server',
+      reload: 'Reload proxy server',
+    },
+  },
 };
