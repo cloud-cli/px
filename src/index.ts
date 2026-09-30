@@ -1,6 +1,6 @@
-import { help, logInfo } from '@cloud-cli/cli';
-import { ProxyManager } from './proxy-manager.js';
-import { DomainAndTarget, DomainName, Proxy, WithOptionalProps } from './types.js';
+import { help, init, logInfo } from "@cloud-cli/cli";
+import { ProxyManager } from "./proxy-manager.js";
+import { DomainAndTarget, DomainName, Proxy, WithOptionalProps } from "./types.js";
 
 const manager = new ProxyManager();
 
@@ -30,7 +30,7 @@ export default {
   },
 
   async reload() {
-    logInfo('Reloading proxy server');
+    logInfo("Reloading proxy server");
     return await manager.reload();
   },
 
@@ -39,16 +39,18 @@ export default {
     return manager.server;
   },
 
-  [help]: {
-    description: 'Reverse proxy management',
-    commands: {
-      add: 'Add a proxy (requires domain and target)',
-      remove: 'Remove a proxy',
-      update: 'Update a proxy',
-      list: 'List proxies',
-      get: 'Get proxy for domain',
-      domains: 'List all domains',
-      reload: 'Reload proxy server',
-    },
+  [help](): string {
+    return `Manages reverse proxy entries
+
+Available commands:
+  px.add --domain <domain> --target <url> [--cors] [--redirect] [--preserveHost] [--redirectUrl <url>] [--headers <headers>] [--authorization <value>] - Add an entry
+  px.remove --domain <domain> - Remove an entry
+  px.update --domain <domain> [proxy options] - Update an entry
+  px.list [--domain <domain>] [--target <url>] [proxy options] - List matching entries
+  px.get --domain <domain> - Get entries for a domain
+  px.domains - List configured domains
+  px.reload - Reload all proxy entries
+
+Proxy options: domain, target, cors, redirect, preserveHost, redirectUrl, headers, authorization`;
   },
 };
