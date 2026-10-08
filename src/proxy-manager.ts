@@ -39,8 +39,8 @@ const readDomain = (options: WithOptionalProps<DomainName>) => {
 };
 
 const numberRe = /^[0-9]+$/;
-const readOption = value => {
-  switch(true) {
+const readOption = (value) => {
+  switch (true) {
     case value === 'true':
       return true;
     case value === 'false':
@@ -50,7 +50,7 @@ const readOption = value => {
     default:
       return value;
   }
-}
+};
 
 function applyProperties(proxy: Proxy, options: Partial<Proxy>) {
   const properties = ['target', 'cors', 'redirect', 'redirectUrl', 'headers', 'authorization', 'preserveHost'];
@@ -130,12 +130,9 @@ export class ProxyManager {
 
   async getProxyListWithContainers(): Promise<Proxy[]> {
     const staticRoutes = getAll();
-    const containers = (await this.getRunningContainers() as any).map(readProxyFromContainer) as Proxy[];
-    const containerDomains = containers.map(c => c.domain.split('/')[0]);
-    const list = [
-      ...staticRoutes.filter(t => !containerDomains.includes(t.domain)),
-      ...containers,
-    ] as Proxy[];
+    const containers = ((await this.getRunningContainers()) as any).map(readProxyFromContainer) as Proxy[];
+    const containerDomains = containers.map((c) => c.domain.split('/')[0]);
+    const list = [...staticRoutes.filter((t) => !containerDomains.includes(t.domain)), ...containers] as Proxy[];
 
     return list;
   }
@@ -165,40 +162,42 @@ export class ProxyManager {
     px.reset();
 
     for (const t of all) {
-      const [domain, path = ""] = t.domain.split("/");
+      try {
+        const [domain, path = ''] = t.domain.split('/');
 
-      px.add(
-        new ProxyEntry({
-          domain,
-          path,
-          target: t.target,
-          redirectToHttps: t.redirect,
-          redirectToUrl: t.redirectUrl,
-          cors: t.cors,
-          headers: t.headers,
-          authorization: t.authorization,
-          preserveHost: t.preserveHost,
-        })
-      );
+        px.add(
+          new ProxyEntry({
+            domain,
+            path,
+            target: t.target,
+            redirectToHttps: t.redirect,
+            redirectToUrl: t.redirectUrl,
+            cors: t.cors,
+            headers: t.headers,
+            authorization: t.authorization,
+            preserveHost: t.preserveHost,
+          }),
+        );
+      } catch (error) {
+        console.log(`Error adding proxy for ${t.domain}:`, error);
+      }
     }
 
     px.start();
   }
 
   async getRunningContainers() {
-    const ps = await exec("docker", ["ps", "-aq"]);
-    const ids = ps.stdout.trim().split("\n");
-    const state = await exec("docker", ["inspect", ...ids]);
+    const ps = await exec('docker', ['ps', '-aq']);
+    const ids = ps.stdout.trim().split('\n');
+    const state = await exec('docker', ['inspect', ...ids]);
     const json: any[] = JSON.parse(state.stdout);
 
-    return json
-      .map(readDockerContainer)
-      .filter(d => d.ports.length && d.labels.host);
+    return json.map(readDockerContainer).filter((d) => d.ports.length && d.labels.host);
   }
 }
 
 function readProxyFromContainer(c: DockerContainer): Proxy {
-  const domain = [c.labels.host, c.labels.path].filter(Boolean).join("/");
+  const domain = [c.labels.host, c.labels.path].filter(Boolean).join('/');
   const proxyOverrides = get(domain) || {};
 
   return {
@@ -212,8 +211,8 @@ function readProxyFromContainer(c: DockerContainer): Proxy {
 function readDockerContainer(d): DockerContainer {
   const labels: Record<string, string> = Object.fromEntries<any>(
     Object.entries(d.Config.Labels || {})
-      .filter(([key]) => key.startsWith("px:"))
-      .map(([key, value]) => [key.replace("px:", ""), value])
+      .filter(([key]) => key.startsWith('px:'))
+      .map(([key, value]) => [key.replace('px:', ''), value]),
   );
 
   return {
@@ -223,7 +222,7 @@ function readDockerContainer(d): DockerContainer {
     name: d.Name,
     labels: labels,
     ports: Object.entries(d.HostConfig.PortBindings || {}).map(([port, pb]) => ({
-      container: Number(port.replace(/\D+/, "")),
+      container: Number(port.replace(/\D+/, '')),
       host: Number(pb[0].HostPort),
     })),
   };
