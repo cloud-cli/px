@@ -1,4 +1,4 @@
-import { getStorage, getConfig } from '@cloud-cli/cli';
+import { getStorage, getConfig, logInfo, logError } from '@cloud-cli/cli';
 import { ProxyEntry, ProxyServer, ProxySettings } from '@cloud-cli/proxy';
 import type { DockerContainer, DomainAndTarget, DomainName, Proxy, WithOptionalProps } from './types.js';
 import { exec } from '@cloud-cli/exec';
@@ -157,21 +157,19 @@ export class ProxyManager {
     return all.filter((p) => p.domain.includes(options.domain));
   }
 
-  async reload(options: { servers?: Boolean } = {}) {
+  async restart() {
+    await px.reset();
+    await px.start();
+    await this.reload();
+  }
+
+  async reload() {
     const all = await this.getProxyListWithContainers();
 
-    if (options.servers) {
-      px.reset();
-    } else {
-      px.resetProxies();
-    }
+    px.resetProxies();
 
     for (const t of all) {
       this.loadProxy(t);
-    }
-
-    if (options.servers) {
-      px.start();
     }
   }
 
@@ -192,8 +190,9 @@ export class ProxyManager {
           preserveHost: t.preserveHost,
         }),
       );
-    } catch (error) {
-      console.log(`Error adding proxy for ${t.domain}:`, error);
+      logInfo(`  ${t.domain} => ${t.target || t.redirectUrl}`);
+    } catch (error: unknown) {
+      logError(`Error adding proxy for ${t.domain}: ${error}`);
     }
   }
 
