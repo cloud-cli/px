@@ -10,9 +10,7 @@
     "test": "echo true",
     "build": "rm -rf ./dist/* && npx tsc"
   },
-  "keywords": [
-    "cloudy"
-  ],
+  "keywords": ["cloudy"],
   "license": "MIT",
   "devDependencies": {
     "@cloud-cli/prettier-config": "^1.0.0",
@@ -28,7 +26,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@cloud-cli/proxy": "^1.2.0",
+    "@cloud-cli/proxy": "^1.2.10",
     "@cloud-cli/exec": "^1.2.0"
   },
   "peerDependencies": {

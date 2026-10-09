@@ -157,33 +157,44 @@ export class ProxyManager {
     return all.filter((p) => p.domain.includes(options.domain));
   }
 
-  async reload() {
+  async reload(options: { servers?: Boolean } = {}) {
     const all = await this.getProxyListWithContainers();
-    px.reset();
 
-    for (const t of all) {
-      try {
-        const [domain, path = ''] = t.domain.split('/');
-
-        px.add(
-          new ProxyEntry({
-            domain,
-            path,
-            target: t.target,
-            redirectToHttps: t.redirect,
-            redirectToUrl: t.redirectUrl,
-            cors: t.cors,
-            headers: t.headers,
-            authorization: t.authorization,
-            preserveHost: t.preserveHost,
-          }),
-        );
-      } catch (error) {
-        console.log(`Error adding proxy for ${t.domain}:`, error);
-      }
+    if (options.servers) {
+      px.reset();
+    } else {
+      px.resetProxies();
     }
 
-    px.start();
+    for (const t of all) {
+      this.loadProxy(t);
+    }
+
+    if (options.servers) {
+      px.start();
+    }
+  }
+
+  private loadProxy(t: Proxy) {
+    try {
+      const [domain, path = ''] = t.domain.split('/');
+
+      px.add(
+        new ProxyEntry({
+          domain,
+          path,
+          target: t.target,
+          redirectToHttps: t.redirect,
+          redirectToUrl: t.redirectUrl,
+          cors: t.cors,
+          headers: t.headers,
+          authorization: t.authorization,
+          preserveHost: t.preserveHost,
+        }),
+      );
+    } catch (error) {
+      console.log(`Error adding proxy for ${t.domain}:`, error);
+    }
   }
 
   async getRunningContainers() {
