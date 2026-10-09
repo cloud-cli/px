@@ -37,7 +37,7 @@ export default {
   async restart() {
     logInfo('Restarting server');
     return await manager.restart();
-  }
+  },
 
   async [init]() {
     await manager.restart();
